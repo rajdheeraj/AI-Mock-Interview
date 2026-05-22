@@ -145,116 +145,238 @@ Return ONLY a valid JSON array of exactly 8 strings, no explanation, no markdown
   }
 };
 
-// ── EVALUATE ANSWERS ─────────────────────────────────────────────
+
 // ── EVALUATE ANSWERS ─────────────────────────────────────────────
 exports.evaluateAnswers = async (req, res) => {
   const { role, company, category, answers } = req.body;
-  console.log('evaluateAnswers called:', { role, company, category, count: answers?.length });
+
+  console.log('evaluateAnswers called:', {
+    role,
+    company,
+    category,
+    count: answers?.length
+  });
+
+  // Count meaningful answers
+  const answeredQuestions = answers.filter(a => {
+    const ans = a.answer?.trim() || '';
+    return ans.length > 15;
+  });
+
+  // ── ALL QUESTIONS SKIPPED ──────────────────────────────────────
+  if (answeredQuestions.length === 0) {
+
+    return res.json({
+      overallScore: 0,
+      grade: 'F',
+
+      overallFeedback:
+        'You skipped all interview questions. Please attempt the questions seriously to receive meaningful feedback and improve your interview skills.',
+
+      strongerSections: [],
+
+      weakerSections: [
+        'No questions were answered',
+        'Communication skills could not be evaluated',
+        'Technical understanding could not be evaluated'
+      ],
+
+      improvementAreas: [
+        {
+          topic: 'Interview Participation',
+          priority: 'High',
+          suggestion:
+            'Try answering every question, even if you are unsure.'
+        },
+        {
+          topic: 'Communication',
+          priority: 'High',
+          suggestion:
+            'Practice explaining your thoughts step-by-step in simple language.'
+        },
+        {
+          topic: 'Confidence',
+          priority: 'Medium',
+          suggestion:
+            'Attempt mock interviews regularly to become more comfortable speaking.'
+        }
+      ],
+
+      answers: answers.map(a => ({
+        question: a.question,
+        answer: a.answer || '',
+        score: 0,
+        feedback: 'Question skipped.',
+        strength: 'No answer provided.',
+        improvement:
+          'Try attempting this question with at least a basic explanation.',
+        idealAnswer:
+          'Provide a simple beginner-friendly answer explaining your understanding.'
+      }))
+    });
+  }
 
   const qaText = answers.map((a, i) =>
     `Q${i + 1}: ${a.question}\nAnswer: ${a.answer || 'No answer given'}`
   ).join('\n\n');
 
   try {
+
     let guidelines = '';
 
     if (category === 'HR') {
+
       guidelines = `
 Evaluation guidelines for FRESHER HR interview:
-- Be encouraging and supportive — this is a fresher
-- For strength question: check if they gave a real example from college or any activity
-- For weakness question: check self-awareness and genuine improvement plan
-- Do not expect corporate experience — college projects are valid
-- Reward honesty, enthusiasm, and willingness to learn`;
+
+- Be encouraging and supportive
+- Reward honesty, confidence, communication and willingness to learn
+- Give low scores for skipped or extremely short answers
+
+SCORING RULES:
+- Give 0-20 for skipped, empty or extremely short answers
+- Give 20-40 for weak one-line answers
+- Give 40-70 for average fresher answers
+- Give 70-100 only for detailed and confident answers`;
 
     } else if (category === 'Sales') {
+
       guidelines = `
 Evaluation guidelines for FRESHER Sales interview:
-- Be encouraging — this candidate is new to sales
-- For rejection handling: check empathy, persistence, logical approach
-- For domain switch: check genuine enthusiasm and transferable skills
-- Reward energy, positive attitude, customer-first thinking`;
 
-  } else {
-  guidelines = `
+- Be encouraging and supportive
+- Reward communication, confidence and customer thinking
+- Give low scores for skipped or extremely short answers
+
+SCORING RULES:
+- Give 0-20 for skipped, empty or extremely short answers
+- Give 20-40 for weak answers
+- Give 40-70 for average fresher answers
+- Give 70-100 only for detailed and practical answers`;
+
+    } else {
+
+      guidelines = `
 Evaluation guidelines for FRESHER technical interview:
-- This is a fresher — be very encouraging and kind in all feedback
-- For basic concept questions Q2, Q5, Q7, Q8: give full marks if they show basic understanding. Partial knowledge is absolutely fine and expected.
-- For DSA logic question Q3: the question is very simple. Check only if their basic logical thinking is correct. A simple step-by-step approach is all that's needed. Do NOT expect algorithm complexity analysis.
-- For SQL/database question Q4: the question is very simple. Check only if they understand basic data retrieval logic. Do NOT expect knowledge of joins or complex queries.
-- For project question Q6: reward enthusiasm, clarity, and what they learned. Any college project counts.
-- Score between 50-90 for reasonable answers — freshers should not get very low scores unless they gave no answer at all
-- Give very encouraging, simple, and actionable feedback
-- Ideal answers must be realistic for a fresher with basic knowledge`;
-}
 
-    const prompt = `You are a friendly and encouraging interviewer evaluating a FRESHER candidate for ${role} at ${company} (${category} category).
+- This is a fresher candidate
+- Be encouraging but realistic
+- Do NOT give high scores for skipped answers
+- Do NOT give high scores for tiny answers
 
-Remember: This person is a recent graduate or final year student. Evaluate with fresher standards.
+SCORING RULES:
+- Give 0-20 for skipped, empty or extremely short answers
+- Give 20-40 for weak answers with little explanation
+- Give 40-70 for partially correct fresher-level answers
+- Give 70-100 only for clear, detailed and well-explained answers
+
+IMPORTANT:
+- Reward logical thinking
+- Reward basic understanding
+- Reward communication clarity
+- Reward practical examples
+- Penalize skipped answers properly
+- Penalize one-word answers properly
+
+This is a beginner-level mock interview for students or recent graduates.`;
+    }
+
+    const prompt = `
+You are a friendly and realistic interviewer evaluating a FRESHER candidate.
+
+Candidate Role: ${role}
+Company: ${company}
+Category: ${category}
 
 ${guidelines}
 
-Analyze all 8 answers together as a complete interview performance.
-Return ONLY valid JSON, no markdown, no backticks, no explanation outside JSON.
-
-Interview Q&A:
+Interview Questions & Answers:
 ${qaText}
 
-Return exactly this JSON structure:
+Return ONLY valid JSON.
+
 {
-  "overallScore": <number 0-100>,
-  "grade": "<A/B/C/D/F>",
-  "overallFeedback": "<2-3 sentence honest overall summary of the candidate's performance in this interview>",
+  "overallScore": number,
+  "grade": "A/B/C/D/F",
+  "overallFeedback": "short honest summary",
 
   "strongerSections": [
-    "<point 1 — specific topic or skill where candidate performed well with reason>",
-    "<point 2 — another strong area observed across their answers>",
-    "<point 3 — optional third strength if clearly visible>"
+    "strength 1",
+    "strength 2",
+    "strength 3"
   ],
 
   "weakerSections": [
-    "<point 1 — specific topic or skill where candidate was weak with reason>",
-    "<point 2 — another weak area observed>",
-    "<point 3 — optional third weakness if clearly visible>"
+    "weakness 1",
+    "weakness 2",
+    "weakness 3"
   ],
 
   "improvementAreas": [
     {
-      "topic": "<specific topic to improve e.g. JavaScript Closures, SQL Joins, React Hooks>",
-      "priority": "<High / Medium / Low>",
-      "suggestion": "<one specific actionable step the fresher can take to improve this — be practical and realistic>"
-    },
-    {
-      "topic": "<another topic>",
-      "priority": "<High / Medium / Low>",
-      "suggestion": "<one actionable step>"
-    },
-    {
-      "topic": "<another topic>",
-      "priority": "<High / Medium / Low>",
-      "suggestion": "<one actionable step>"
+      "topic": "topic",
+      "priority": "High/Medium/Low",
+      "suggestion": "practical improvement step"
     }
   ],
 
   "answers": [
     {
-      "score": <number 0-100>,
-      "feedback": "<2 sentence specific feedback on this answer>",
-      "strength": "<what was good about this specific answer>",
-      "improvement": "<one specific improvement for this answer>",
-      "idealAnswer": "<simple realistic example of a good fresher answer>"
+      "question": "question text",
+      "answer": "candidate answer",
+      "score": number,
+      "feedback": "2 sentence feedback",
+      "strength": "what was good",
+      "improvement": "what to improve",
+      "idealAnswer": "simple fresher-level ideal answer"
     }
   ]
-}`;
+}
+`;
 
-    const text       = await askGroq(prompt);
-    const cleaned    = text.replace(/```json|```/g, '').trim();
+    const text = await askGroq(prompt);
+
+    const cleaned = text
+      .replace(/```json|```/g, '')
+      .trim();
+
     const evaluation = JSON.parse(cleaned);
 
-    console.log('Evaluation complete. Overall score:', evaluation.overallScore);
+    // ── EXTRA SAFETY CHECK ────────────────────────────────────────
+    const participationRatio =
+      answeredQuestions.length / answers.length;
+
+    if (participationRatio < 0.3) {
+
+      evaluation.overallScore = Math.min(
+        evaluation.overallScore,
+        25
+      );
+
+      evaluation.grade = 'F';
+
+      evaluation.overallFeedback =
+        'Most interview questions were skipped or answered very briefly. Try giving more detailed answers to improve your evaluation score.';
+    }
+
+    // Prevent unrealistically high scores
+    if (evaluation.overallScore > 95) {
+      evaluation.overallScore = 95;
+    }
+
+    console.log(
+      'Evaluation complete. Overall score:',
+      evaluation.overallScore
+    );
+
     res.json(evaluation);
+
   } catch (err) {
+
     console.error('Groq evaluation error:', err.message);
-    res.status(500).json({ message: 'Failed to evaluate answers' });
+
+    res.status(500).json({
+      message: 'Failed to evaluate answers'
+    });
   }
 };
