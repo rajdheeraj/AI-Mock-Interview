@@ -41,32 +41,34 @@ export default function InterviewRoom() {
   useEffect(() => { mutedRef.current = muted; }, [muted]);
 
   // ── FETCH QUESTIONS ──────────────────────────────────────────────
-  useEffect(() => {
-    if (permissionStatus !== 'granted') return;
-    setLoadingQ(true);
-    generateQuestions({
-      role:     interview?.role     || 'Software Engineer',
-      company:  interview?.company  || 'General',
-      category: interview?.category || 'General',
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+useEffect(() => {
+  if (permissionStatus !== 'granted') return;
+  setLoadingQ(true);
+
+  generateQuestions({
+    role: interview?.role || 'Software Engineer',
+    company: interview?.company || 'General',
+    category: interview?.category || 'General',
+  })
+    .then(({ data }) => {
+      setQuestions(data.questions);
+      toast.success('Questions ready!');
     })
-      .then(({ data }) => {
-        setQuestions(data.questions);
-        toast.success('Questions ready!');
-      })
-      .catch(() => {
-        toast.error('Using default questions.');
-        setQuestions([
-          'Tell me about yourself and your experience.',
-          'What are your key technical strengths?',
-          'Describe a challenging project you worked on.',
-          'How do you handle tight deadlines?',
-          'Where do you see yourself in 3 years?',
-          'What is your biggest professional achievement?',
-          'How do you keep your technical skills up to date?',
-        ]);
-      })
-      .finally(() => setLoadingQ(false));
-  }, [permissionStatus]);
+    .catch(() => {
+      toast.error('Using default questions.');
+      setQuestions([
+        'Tell me about yourself and your experience.',
+        'What are your key technical strengths?',
+        'Describe a challenging project you worked on.',
+        'How do you handle tight deadlines?',
+        'Where do you see yourself in 3 years?',
+        'What is your biggest professional achievement?',
+        'How do you keep your technical skills up to date?',
+      ]);
+    })
+    .finally(() => setLoadingQ(false));
+}, [permissionStatus]);
 
   // ── SPEECH ──────────────────────────────────────────────────────
   const speak = (text, onDone) => {
@@ -112,10 +114,12 @@ export default function InterviewRoom() {
   };
 
   // ── START INTERVIEW ──────────────────────────────────────────────
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!started) return;
     if (streamRef.current && videoRef.current) {
       videoRef.current.srcObject = streamRef.current;
+      
     }
     setTimeout(() => {
       speak(
@@ -129,6 +133,7 @@ export default function InterviewRoom() {
   }, [started]);
 
   // ── TIMER ────────────────────────────────────────────────────────
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!started) return;
     if (timeLeft <= 0) { handleNext(); return; }
@@ -137,6 +142,7 @@ export default function InterviewRoom() {
   }, [timeLeft, started]);
 
   // ── STEP CHANGE ──────────────────────────────────────────────────
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setTimeLeft(TIMER_SECONDS);
     setCurrent('');
