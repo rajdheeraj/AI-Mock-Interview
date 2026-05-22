@@ -41,7 +41,7 @@ export default function InterviewRoom() {
   useEffect(() => { mutedRef.current = muted; }, [muted]);
 
   // ── FETCH QUESTIONS ──────────────────────────────────────────────
- // eslint-disable-next-line react-hooks/exhaustive-deps
+ 
 useEffect(() => {
   if (permissionStatus !== 'granted') return;
   setLoadingQ(true);
@@ -68,6 +68,7 @@ useEffect(() => {
       ]);
     })
     .finally(() => setLoadingQ(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [permissionStatus]);
 
   // ── SPEECH ──────────────────────────────────────────────────────
