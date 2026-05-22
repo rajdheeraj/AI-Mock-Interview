@@ -33,3 +33,18 @@ input, textarea, button {
   -webkit-appearance: none;
   border-radius: 0;
 }
+/* Tablet */
+@media (max-width: 768px) {
+  /* Dashboard stats — 2 columns on mobile */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  /* Hide search on very small screens */
+  .search-box {
+    display: none !important;
+  }
+}

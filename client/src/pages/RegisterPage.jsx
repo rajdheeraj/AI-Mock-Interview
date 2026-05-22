@@ -140,8 +140,8 @@ export default function RegisterPage() {
 }
 
 const s = {
-  page:        { display:'flex', minHeight:'100vh', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
-  left:        { width:'45%', background:'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'48px' },
+  page:        { display:'flex', flexDirection:'column', minHeight:'100vh', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
+  left:        { display:'none' },  // hide left panel on mobile
   leftInner:   { maxWidth:'360px' },
   brand:       { fontSize:'22px', fontWeight:'800', color:'#fff', marginBottom:'40px' },
   leftTitle:   { fontSize:'32px', fontWeight:'800', color:'#fff', lineHeight:'1.3', margin:'0 0 16px' },
@@ -150,8 +150,8 @@ const s = {
   featureItem: { display:'flex', alignItems:'center', gap:'12px' },
   featureIcon: { width:'36px', height:'36px', background:'rgba(255,255,255,0.15)', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px' },
   featureText: { color:'#e0f2fe', fontSize:'14px', fontWeight:'500' },
-  right:       { flex:1, background:'#f8fafc', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'32px' },
-  card:        { background:'#fff', borderRadius:'20px', padding:'40px', width:'100%', maxWidth:'440px', boxShadow:'0 4px 24px rgba(0,0,0,0.08)' },
+  right:       { flex:1, background:'#f8fafc', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px 16px' },
+  card:        { background:'#fff', borderRadius:'16px', padding:'28px 20px', width:'100%', maxWidth:'420px', boxShadow:'0 4px 24px rgba(0,0,0,0.08)' },
   cardTop:     { marginBottom:'28px' },
   title:       { fontSize:'24px', fontWeight:'800', color:'#0f172a', margin:'0 0 6px' },
   subtitle:    { fontSize:'14px', color:'#64748b', margin:0 },
