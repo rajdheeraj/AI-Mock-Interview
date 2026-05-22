@@ -114,12 +114,12 @@ useEffect(() => {
   };
 
   // ── START INTERVIEW ──────────────────────────────────────────────
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+ 
   useEffect(() => {
     if (!started) return;
     if (streamRef.current && videoRef.current) {
       videoRef.current.srcObject = streamRef.current;
-      
+
     }
     setTimeout(() => {
       speak(
@@ -130,19 +130,21 @@ useEffect(() => {
       stopCamera();
       window.speechSynthesis.cancel();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started]);
 
   // ── TIMER ────────────────────────────────────────────────────────
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+ 
   useEffect(() => {
     if (!started) return;
     if (timeLeft <= 0) { handleNext(); return; }
     timerRef.current = setTimeout(() => setTimeLeft(t => t - 1), 1000);
     return () => clearTimeout(timerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, started]);
 
   // ── STEP CHANGE ──────────────────────────────────────────────────
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+ 
   useEffect(() => {
     setTimeLeft(TIMER_SECONDS);
     setCurrent('');
@@ -152,6 +154,7 @@ useEffect(() => {
         speak(`Question ${step + 1}. ${questions[step]}`);
       }, 400);
     }
+     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
   // ── VOICE INPUT ──────────────────────────────────────────────────
