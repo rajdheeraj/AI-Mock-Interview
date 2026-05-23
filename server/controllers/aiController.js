@@ -33,6 +33,7 @@ exports.generateQuestions = async (req, res) => {
     if (category === 'HR') {
       prompt = `You are a senior HR interviewer at ${company} interviewing for ${role}.
 Generate exactly 7 interview questions following this structure:
+
 Q1: Warm-up about candidate background and introduction
 Q2: Tell me about your greatest strength with a real example
 Q3: Tell me about your biggest weakness and how you are improving it
