@@ -39,8 +39,8 @@ Q2: Tell me about your greatest strength with a real example
 Q3: Tell me about your biggest weakness and how you are improving it
 Q4: How do you handle conflict or pressure at work
 Q5: Describe your teamwork and collaboration experience
-Q6: Where do you see yourself in 5 years at ${company}
-Q7: Why do you want to work specifically at ${company} for this ${role} role
+Q6: Where do you see yourself in next 5 years 
+Q7: Why do you want to work specifically at this company
 
 Return ONLY a valid JSON array of exactly 7 strings, no explanation, no markdown, no backticks:
 ["question1","question2","question3","question4","question5","question6","question7"]`;
