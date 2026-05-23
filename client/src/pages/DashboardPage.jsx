@@ -258,7 +258,7 @@ export default function DashboardPage() {
   const filtered = filter === 'All' ? INTERVIEWS : INTERVIEWS.filter(iv => iv.category === filter);
   const avgScore  = attempts.length ? Math.round(attempts.reduce((s, a) => s + a.totalScore, 0) / attempts.length) : 0;
   const bestScore = attempts.length ? Math.max(...attempts.map(a => a.totalScore)) : 0;
-  const showAttempts = activeNav === 'My Attempts';
+  
 
   const toggleSide = () => {
     if (isMobile) setSideOpen(o => !o);
@@ -340,14 +340,18 @@ export default function DashboardPage() {
               <span style={{ display: 'block', width: '16px', height: '2px', background: '#475569', borderRadius: '2px' }} />
               <span style={{ display: 'block', width: '20px', height: '2px', background: '#475569', borderRadius: '2px' }} />
             </button>
-            <div style={{ flex: 1, marginLeft: '12px' }}>
-              <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', lineHeight: '1.2' }}>
-                {showAttempts ? '📋 My Attempts' : `Hey, ${user?.name?.split(' ')[0]} 👋`}
-              </div>
-              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '1px' }}>
-                {showAttempts ? `${attempts.length} sessions` : 'Ready to practice?'}
-              </div>
-            </div>
+            <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', lineHeight: '1.2' }}>
+               {activeNav === 'Dashboard'   && `Hey, ${user?.name?.split(' ')[0]} 👋`}
+               {activeNav === 'My Attempts' && '📋 My Attempts'}
+               {activeNav === 'Analytics'   && '📊 Analytics'}
+               {activeNav === 'Settings'    && '⚙️ Settings'}
+             </div>
+            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '1px' }}>
+             {activeNav === 'Dashboard'   && 'Ready to practice?'}
+             {activeNav === 'My Attempts' && `${attempts.length} sessions completed`}
+             {activeNav === 'Analytics'   && 'Your performance overview'}
+              {activeNav === 'Settings'    && 'Manage your account'}
+             </div>
             <div className="db-search">
               <span style={{ fontSize: '14px' }}>🔍</span>
               <input placeholder="Search roles..." />
