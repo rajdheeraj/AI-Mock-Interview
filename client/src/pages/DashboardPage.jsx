@@ -1,45 +1,192 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { getAttempts } from '../services/api';
 
+// ── CSS injected for animations and media queries ──────────────────
+const globalCSS = `
+  * { box-sizing: border-box; }
+  body { overflow-x: hidden; margin: 0; }
+
+  .db-root { display: flex; min-height: 100vh; background: #f0f2f5;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+  /* ── SIDEBAR ── */
+  .db-sidebar {
+    position: fixed; top: 0; left: 0; height: 100vh; z-index: 300;
+    background: #0f172a; display: flex; flex-direction: column;
+    transition: transform 0.32s cubic-bezier(.4,0,.2,1), width 0.32s cubic-bezier(.4,0,.2,1);
+    overflow: hidden; flex-shrink: 0;
+  }
+  .db-sidebar.open  { transform: translateX(0); }
+  .db-sidebar.closed { transform: translateX(-100%); }
+
+  /* Desktop: icon-only collapsed sidebar always visible */
+  @media (min-width: 769px) {
+    .db-sidebar { position: fixed; transform: translateX(0) !important; }
+    .db-sidebar.icon-only { width: 64px; }
+    .db-sidebar.expanded  { width: 220px; }
+    .db-main { transition: margin-left 0.32s cubic-bezier(.4,0,.2,1); }
+    .db-main.sidebar-icon { margin-left: 64px; }
+    .db-main.sidebar-full { margin-left: 220px; }
+  }
+
+  /* Mobile: full overlay drawer */
+  @media (max-width: 768px) {
+    .db-sidebar { width: 240px !important; transform: translateX(-100%); }
+    .db-sidebar.mobile-open { transform: translateX(0) !important; }
+    .db-main { margin-left: 0 !important; }
+    .db-overlay { display: block !important; }
+  }
+
+  .db-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 299; backdrop-filter: blur(2px);
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+
+  /* ── STATS GRID ── */
+  .db-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+  @media (max-width: 1024px) { .db-stats { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 480px)  { .db-stats { grid-template-columns: repeat(2,1fr); gap: 10px; } }
+
+  /* ── CARDS GRID ── */
+  .db-cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 28px; }
+  @media (max-width: 1200px) { .db-cards { grid-template-columns: repeat(3,1fr); } }
+  @media (max-width: 900px)  { .db-cards { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 500px)  { .db-cards { grid-template-columns: 1fr; } }
+
+  /* ── ATTEMPTS TABLE ── */
+  .db-attempt-row { display: flex; align-items: center; padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.15s; }
+  .db-attempt-row:hover { background: #f0f9ff; }
+  .db-attempt-row:last-child { border-bottom: none; }
+  .db-col-main  { flex: 2; display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .db-col-cat   { flex: 1; text-align: center; }
+  .db-col-score { flex: 1; text-align: center; }
+  .db-col-date  { flex: 1; text-align: right; font-size: 12px; color: #94a3b8; }
+  @media (max-width: 600px) {
+    .db-col-cat  { display: none; }
+    .db-col-date { display: none; }
+    .db-col-score { flex: 0 0 60px; }
+  }
+
+  /* ── CARD HOVER ── */
+  .db-card { transition: transform 0.18s ease, box-shadow 0.18s ease; cursor: pointer; }
+  .db-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.12) !important; }
+
+  /* ── NAV ITEM ── */
+  .db-nav-item { display: flex; align-items: center; gap: 12px;
+    padding: 11px 16px; color: #94a3b8; cursor: pointer;
+    transition: background 0.15s, color 0.15s; border-left: 3px solid transparent;
+    white-space: nowrap; }
+  .db-nav-item:hover { background: #1e293b; color: #e2e8f0; }
+  .db-nav-item.active { background: #1e3a5f; color: #fff; border-left-color: #3b82f6; }
+
+  /* ── MAIN ── */
+  .db-main { flex: 1; min-width: 0; padding: 0; overflow-x: hidden; }
+
+  /* ── TOPBAR ── */
+  .db-topbar { display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; background: #fff; border-bottom: 1px solid #e8eaed;
+    position: sticky; top: 0; z-index: 100; gap: 12px; }
+  @media (max-width: 600px) { .db-topbar { padding: 12px 14px; } }
+
+  .db-search { display: flex; align-items: center; gap: 8px;
+    background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px;
+    padding: 8px 14px; flex: 1; max-width: 280px; transition: border-color 0.2s; }
+  .db-search:focus-within { border-color: #3b82f6; }
+  .db-search input { border: none; background: transparent; outline: none;
+    font-size: 13px; color: #334155; width: 100%; }
+  @media (max-width: 500px) { .db-search { max-width: 160px; } }
+
+  /* ── CONTENT ── */
+  .db-content { padding: 22px 24px; }
+  @media (max-width: 600px) { .db-content { padding: 14px; } }
+
+  /* ── FILTERS ── */
+  .db-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+
+  /* ── SECTION ── */
+  .db-section-header { display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+
+  /* Scrollbar styling */
+  .db-main::-webkit-scrollbar { width: 4px; }
+  .db-main::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+`;
+
 const INTERVIEWS = [
-  { id:'1', company:'TCS',         role:'Software Engineer',  category:'Full Stack', icon:'💻', color:'#3b82f6', bg:'#eff6ff' },
-  { id:'2', company:'Wipro',       role:'Full Stack (MERN)',   category:'Full Stack', icon:'⚛️', color:'#8b5cf6', bg:'#f5f3ff' },
-  { id:'3', company:'Deloitte',    role:'Associate SWE',       category:'Backend',    icon:'🔧', color:'#10b981', bg:'#ecfdf5' },
-  { id:'4', company:'Infosys',     role:'Frontend Developer',  category:'Frontend',   icon:'🎨', color:'#f59e0b', bg:'#fffbeb' },
-  { id:'5', company:'HCL',         role:'Full Stack (Java)',   category:'Full Stack', icon:'☕', color:'#ef4444', bg:'#fef2f2' },
-  { id:'6', company:'Accenture',   role:'Python Developer',    category:'Backend',    icon:'🐍', color:'#06b6d4', bg:'#ecfeff' },
-  { id:'7', company:'Any Company', role:'HR Round',            category:'HR',         icon:'🤝', color:'#ec4899', bg:'#fdf2f8' },
-  { id:'8', company:'Any Company', role:'Sales Interview',     category:'Sales',      icon:'📈', color:'#f97316', bg:'#fff7ed' },
+  { id:'1', company:'TCS',         role:'Software Engineer',  category:'Full Stack', icon:'💻', color:'#3b82f6', bg:'#eff6ff', border:'#bfdbfe' },
+  { id:'2', company:'Wipro',       role:'Full Stack (MERN)',   category:'Full Stack', icon:'⚛️', color:'#8b5cf6', bg:'#f5f3ff', border:'#ddd6fe' },
+  { id:'3', company:'Deloitte',    role:'Associate SWE',       category:'Backend',    icon:'🔧', color:'#10b981', bg:'#ecfdf5', border:'#a7f3d0' },
+  { id:'4', company:'Infosys',     role:'Frontend Developer',  category:'Frontend',   icon:'🎨', color:'#f59e0b', bg:'#fffbeb', border:'#fde68a' },
+  { id:'5', company:'HCL',         role:'Full Stack (Java)',   category:'Full Stack', icon:'☕', color:'#ef4444', bg:'#fef2f2', border:'#fecaca' },
+  { id:'6', company:'Accenture',   role:'Python Developer',    category:'Backend',    icon:'🐍', color:'#06b6d4', bg:'#ecfeff', border:'#a5f3fc' },
+  { id:'7', company:'Any Company', role:'HR Round',            category:'HR',         icon:'🤝', color:'#ec4899', bg:'#fdf2f8', border:'#fbcfe8' },
+  { id:'8', company:'Any Company', role:'Sales Interview',     category:'Sales',      icon:'📈', color:'#f97316', bg:'#fff7ed', border:'#fed7aa' },
 ];
 
 const CATEGORIES = ['All','Full Stack','Frontend','Backend','HR','Sales'];
+
+const NAV_ITEMS = [
+  { icon:'🏠', label:'Dashboard'   },
+  { icon:'📋', label:'My Attempts' },
+  { icon:'📊', label:'Analytics'   },
+  { icon:'⚙️', label:'Settings'    },
+];
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const [attempts,     setAttempts]     = useState([]);
-  const [filter,       setFilter]       = useState('All');
-  const [loading,      setLoading]      = useState(true);
-  const [sideOpen,     setSideOpen]     = useState(true);
-  const [hoveredCard,  setHoveredCard]  = useState(null);
-  const [hoveredNav,   setHoveredNav]   = useState(null);
-  const [hoveredRow,   setHoveredRow]   = useState(null);
-  const [activeNav,    setActiveNav]    = useState('Dashboard');
+  const [attempts,    setAttempts]    = useState([]);
+  const [filter,      setFilter]      = useState('All');
+  const [loading,     setLoading]     = useState(true);
+  const [activeNav,   setActiveNav]   = useState('Dashboard');
+  const [sideOpen,    setSideOpen]    = useState(false);   // mobile drawer
+  const [sideExpanded,setSideExpanded]= useState(false);   // desktop expanded
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const [isMobile,    setIsMobile]    = useState(window.innerWidth <= 768);
+
+  const sidebarRef = useRef(null);
+
+  // Detect mobile
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Close sidebar on outside click (mobile)
+  useEffect(() => {
+    const handler = (e) => {
+      if (isMobile && sideOpen && sidebarRef.current && !sidebarRef.current.contains(e.target)) {
+        setSideOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    document.addEventListener('touchstart', handler);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('touchstart', handler);
+    };
+  }, [isMobile, sideOpen]);
+
+  // Prevent body scroll when mobile drawer open
+  useEffect(() => {
+    if (isMobile) {
+      document.body.style.overflow = sideOpen ? 'hidden' : '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [sideOpen, isMobile]);
 
   useEffect(() => {
     getAttempts()
-      .then(({ data }) => {
-        console.log('Attempts loaded:', data.length);
-        setAttempts(data);
-      })
-      .catch((err) => {
-        console.error('Attempts fetch error:', err);
-        toast.error('Could not load attempts');
-      })
+      .then(({ data }) => setAttempts(data))
+      .catch(() => toast.error('Could not load attempts'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -47,71 +194,80 @@ export default function DashboardPage() {
     ? INTERVIEWS
     : INTERVIEWS.filter(i => i.category === filter);
 
-  const avgScore = attempts.length
-    ? Math.round(attempts.reduce((s, a) => s + a.totalScore, 0) / attempts.length)
-    : 0;
-
+  const avgScore  = attempts.length
+    ? Math.round(attempts.reduce((s, a) => s + a.totalScore, 0) / attempts.length) : 0;
   const bestScore = attempts.length
-    ? Math.max(...attempts.map(a => a.totalScore))
-    : 0;
+    ? Math.max(...attempts.map(a => a.totalScore)) : 0;
 
-  const navItems = [
-    { icon:'🏠', label:'Dashboard'   },
-    { icon:'📋', label:'My Attempts' },
-    { icon:'📊', label:'Analytics'   },
-    { icon:'⚙️', label:'Settings'    },
-  ];
-
-  // Show attempts view when My Attempts is clicked
   const showAttempts = activeNav === 'My Attempts';
 
+  // Toggle hamburger
+  const toggleSide = () => {
+    if (isMobile) setSideOpen(o => !o);
+    else setSideExpanded(o => !o);
+  };
+
+  // Sidebar class names
+  const sideClass = isMobile
+    ? `db-sidebar ${sideOpen ? 'mobile-open' : ''}`
+    : `db-sidebar ${sideExpanded ? 'expanded' : 'icon-only'}`;
+
+  const mainClass = isMobile
+    ? 'db-main'
+    : `db-main ${sideExpanded ? 'sidebar-full' : 'sidebar-icon'}`;
+
   return (
-    <div style={s.root}>
+    <>
+      <style>{globalCSS}</style>
 
-      {/* ── SIDEBAR ── */}
-      <aside style={{ ...s.sidebar, width: sideOpen ? '220px' : '64px' }}>
-        <div style={s.sideTop}>
-          <div style={s.brand}>{sideOpen ? '🎯 MockPrep' : '🎯'}</div>
-          <button style={s.collapseBtn} onClick={() => setSideOpen(o => !o)}>
-            {sideOpen ? '◀' : '▶'}
-          </button>
-        </div>
+      <div className="db-root">
 
-        {navItems.map(({ icon, label }) => (
-          <div
-            key={label}
-            title={label}
-            style={{
-              ...s.navItem,
-              background: activeNav === label ? '#1e3a5f'
-                        : hoveredNav === label ? '#1e293b'
-                        : 'transparent',
-              borderLeft: activeNav === label ? '3px solid #3b82f6' : '3px solid transparent',
-            }}
-            onMouseEnter={() => setHoveredNav(label)}
-            onMouseLeave={() => setHoveredNav(null)}
-            onClick={() => setActiveNav(label)}
-          >
-            <span style={s.navIcon}>{icon}</span>
-            {sideOpen && <span style={{
-              ...s.navLabel,
-              color: activeNav === label ? '#fff' : '#94a3b8',
-            }}>{label}</span>}
+        {/* ── MOBILE OVERLAY ── */}
+        {isMobile && sideOpen && (
+          <div className="db-overlay" onClick={() => setSideOpen(false)} />
+        )}
+
+        {/* ── SIDEBAR ── */}
+        <aside ref={sidebarRef} className={sideClass}>
+          {/* Brand */}
+          <div style={{ padding:'18px 16px 14px', borderBottom:'1px solid #1e293b', display:'flex', alignItems:'center', gap:'10px' }}>
+            <span style={{ fontSize:'20px' }}>🎯</span>
+            {(sideExpanded || isMobile) && (
+              <span style={{ color:'#fff', fontWeight:'800', fontSize:'15px', whiteSpace:'nowrap' }}>
+                MockPrep
+              </span>
+            )}
           </div>
-        ))}
 
-        <div style={s.sideFooter}>
-          <div style={s.userRow} title={user?.name}>
-            <div style={s.avatar}>
+          {/* Nav items */}
+          <nav style={{ flex:1, paddingTop:'8px' }}>
+            {NAV_ITEMS.map(({ icon, label }) => (
+              <div
+                key={label}
+                className={`db-nav-item ${activeNav === label ? 'active' : ''}`}
+                onClick={() => { setActiveNav(label); if (isMobile) setSideOpen(false); }}
+                title={label}
+              >
+                <span style={{ fontSize:'19px', minWidth:'22px', textAlign:'center', flexShrink:0 }}>{icon}</span>
+                {(sideExpanded || isMobile) && (
+                  <span style={{ fontSize:'14px', fontWeight:'500' }}>{label}</span>
+                )}
+              </div>
+            ))}
+          </nav>
+
+          {/* User footer */}
+          <div style={{ borderTop:'1px solid #1e293b', padding:'14px 16px', display:'flex', alignItems:'center', gap:'10px' }}>
+            <div style={{ width:'34px', height:'34px', borderRadius:'50%', background:'linear-gradient(135deg,#3b82f6,#8b5cf6)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'14px', flexShrink:0 }}>
               {user?.name?.charAt(0).toUpperCase()}
             </div>
-            {sideOpen && (
-              <div style={s.userInfo}>
-                <div style={s.userName}>{user?.name}</div>
+            {(sideExpanded || isMobile) && (
+              <div style={{ overflow:'hidden', flex:1 }}>
+                <div style={{ color:'#e2e8f0', fontSize:'12px', fontWeight:'600', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                  {user?.name}
+                </div>
                 <button
-                  style={s.logoutBtn}
-                  onMouseEnter={e => e.target.style.color='#fca5a5'}
-                  onMouseLeave={e => e.target.style.color='#ef4444'}
+                  style={{ background:'none', border:'none', color:'#f87171', fontSize:'11px', cursor:'pointer', padding:0, marginTop:'2px' }}
                   onClick={() => { logout(); navigate('/'); }}
                 >
                   Sign out
@@ -119,365 +275,286 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-        </div>
-      </aside>
+        </aside>
 
-      {/* ── MAIN ── */}
-      <main style={s.main}>
+        {/* ── MAIN CONTENT ── */}
+        <div className={mainClass} style={{ minHeight:'100vh', overflowX:'hidden' }}>
 
-        {/* TOP BAR */}
-        <div style={s.topbar}>
-          <div>
-            <h1 style={s.greeting}>
-              {showAttempts ? '📋 My Attempts' : `Good day, ${user?.name} 👋`}
-            </h1>
-            <p style={s.greetingSub}>
-              {showAttempts
-                ? `${attempts.length} interview sessions completed`
-                : 'Ready for your next interview practice?'}
-            </p>
+          {/* ── TOPBAR ── */}
+          <div className="db-topbar">
+            {/* Hamburger */}
+            <button
+              onClick={toggleSide}
+              style={{ background:'none', border:'none', cursor:'pointer', padding:'6px', borderRadius:'8px', display:'flex', flexDirection:'column', gap:'5px', flexShrink:0 }}
+              aria-label="Toggle menu"
+            >
+              <span style={{ display:'block', width:'20px', height:'2px', background:'#475569', borderRadius:'2px', transition:'all 0.3s' }} />
+              <span style={{ display:'block', width:'16px', height:'2px', background:'#475569', borderRadius:'2px', transition:'all 0.3s' }} />
+              <span style={{ display:'block', width:'20px', height:'2px', background:'#475569', borderRadius:'2px', transition:'all 0.3s' }} />
+            </button>
+
+            {/* Greeting */}
+            <div style={{ flex:1, marginLeft:'12px' }}>
+              <div style={{ fontSize:'15px', fontWeight:'700', color:'#0f172a', lineHeight:'1.2' }}>
+                {showAttempts ? '📋 My Attempts' : `Hey, ${user?.name?.split(' ')[0]} 👋`}
+              </div>
+              <div style={{ fontSize:'12px', color:'#64748b', marginTop:'1px' }}>
+                {showAttempts ? `${attempts.length} sessions` : 'Ready to practice?'}
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="db-search">
+              <span style={{ fontSize:'14px' }}>🔍</span>
+              <input placeholder="Search roles..." />
+            </div>
+
+            {/* Avatar */}
+            <div style={{ width:'34px', height:'34px', borderRadius:'50%', background:'linear-gradient(135deg,#3b82f6,#8b5cf6)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'14px', flexShrink:0 }}>
+              {user?.name?.charAt(0).toUpperCase()}
+            </div>
           </div>
-          {!showAttempts && (
-            <div style={s.topRight}>
-              <div style={s.searchBox}>
-                <span>🔍</span>
-                <input style={s.searchInput} placeholder="Search roles..." />
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* STATS */}
-        <div style={s.statsGrid}>
-          {[
-            { label:'Total attempts', value: attempts.length,  icon:'📝', color:'#3b82f6', bg:'#eff6ff' },
-            { label:'Avg. score',     value: `${avgScore}%`,   icon:'📊', color:'#10b981', bg:'#ecfdf5' },
-            { label:'Best score',     value: `${bestScore}%`,  icon:'🏆', color:'#f59e0b', bg:'#fffbeb' },
-            { label:'Companies',      value: '8+',             icon:'🏢', color:'#8b5cf6', bg:'#f5f3ff' },
-          ].map(({ label, value, icon, color, bg }) => (
-            <div key={label} style={{ ...s.statCard, borderTop:`3px solid ${color}` }}>
-              <div style={{ ...s.statIcon, background: bg, color }}>{icon}</div>
-              <div>
-                <div style={s.statLabel}>{label}</div>
-                <div style={{ ...s.statVal, color }}>{value}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+          {/* ── PAGE CONTENT ── */}
+          <div className="db-content">
 
-        {/* ── MY ATTEMPTS VIEW ── */}
-        {showAttempts ? (
-          <div>
-            <div style={s.sectionHeader}>
-              <div>
-                <h2 style={s.sectionTitle}>All Interview History</h2>
-                <p style={s.sectionSub}>Click any row to view full feedback and AI analysis</p>
-              </div>
-              {attempts.length > 0 && (
-                <span style={s.countBadge}>{attempts.length} total</span>
-              )}
-            </div>
-
-            {loading ? (
-              <div style={s.emptyState}>
-                <div style={s.emptyIcon}>⏳</div>
-                <p style={s.emptyText}>Loading your attempts...</p>
-              </div>
-            ) : attempts.length === 0 ? (
-              <div style={s.emptyState}>
-                <div style={s.emptyIcon}>🎯</div>
-                <p style={s.emptyText}>No attempts yet</p>
-                <p style={s.emptySub}>Start your first interview to see results here</p>
-                <button
-                  style={s.emptyBtn}
-                  onClick={() => setActiveNav('Dashboard')}
-                >
-                  Go to Dashboard →
-                </button>
-              </div>
-            ) : (
-              <div style={s.attemptList}>
-                <div style={s.tableHeader}>
-                  <span style={{ flex:2 }}>Role & Company</span>
-                  <span style={{ flex:1, textAlign:'center' }}>Category</span>
-                  <span style={{ flex:1, textAlign:'center' }}>Score</span>
-                  <span style={{ flex:1, textAlign:'center' }}>Grade</span>
-                  <span style={{ flex:1, textAlign:'right'  }}>Date</span>
+            {/* ── STATS ── */}
+            <div className="db-stats">
+              {[
+                { label:'Total attempts', value: attempts.length,  icon:'📝', color:'#3b82f6', bg:'#eff6ff', border:'#bfdbfe' },
+                { label:'Avg. score',     value: `${avgScore}%`,   icon:'📊', color:'#10b981', bg:'#ecfdf5', border:'#a7f3d0' },
+                { label:'Best score',     value: `${bestScore}%`,  icon:'🏆', color:'#f59e0b', bg:'#fffbeb', border:'#fde68a' },
+                { label:'Companies',      value: '8+',             icon:'🏢', color:'#8b5cf6', bg:'#f5f3ff', border:'#ddd6fe' },
+              ].map(({ label, value, icon, color, bg, border }) => (
+                <div key={label} style={{ background:'#fff', borderRadius:'14px', padding:'16px', display:'flex', alignItems:'center', gap:'12px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)', borderTop:`3px solid ${color}`, border:`1px solid ${border}`, borderTopWidth:'3px' }}>
+                  <div style={{ width:'42px', height:'42px', borderRadius:'12px', background: bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', flexShrink:0 }}>
+                    {icon}
+                  </div>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ fontSize:'11px', color:'#64748b', marginBottom:'3px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{label}</div>
+                    <div style={{ fontSize:'22px', fontWeight:'800', color, lineHeight:1 }}>{value}</div>
+                  </div>
                 </div>
-                {attempts.map((a, i) => {
-                  const scoreColor = a.totalScore >= 70 ? '#16a34a' : a.totalScore >= 50 ? '#d97706' : '#dc2626';
-                  const scoreBg    = a.totalScore >= 70 ? '#dcfce7' : a.totalScore >= 50 ? '#fef9c3' : '#fee2e2';
-                  const gradeColor = a.grade === 'A' ? '#16a34a' : a.grade === 'B' ? '#2563eb' : a.grade === 'C' ? '#d97706' : '#dc2626';
-                  return (
-                    <div
-                      key={a._id}
-                      style={{
-                        ...s.tableRow,
-                        background:    hoveredRow === a._id ? '#f0f9ff' : i % 2 === 0 ? '#fff' : '#fafafa',
-                        cursor:        'pointer',
-                        borderLeft:    hoveredRow === a._id ? '3px solid #3b82f6' : '3px solid transparent',
-                      }}
-                      onMouseEnter={() => setHoveredRow(a._id)}
-                      onMouseLeave={() => setHoveredRow(null)}
-                      onClick={() => navigate(`/results/${a._id}`, { state: { attempt: a } })}
-                    >
-                      <div style={{ flex:2, display:'flex', alignItems:'center', gap:'10px' }}>
-                        <div style={s.attemptAvatar}>{a.company?.charAt(0)}</div>
-                        <div>
-                          <div style={s.attemptRole}>{a.role}</div>
-                          <div style={s.attemptCompany}>{a.company}</div>
-                        </div>
-                      </div>
-                      <div style={{ flex:1, textAlign:'center' }}>
-                        <span style={s.categoryPill}>{a.category}</span>
-                      </div>
-                      <div style={{ flex:1, textAlign:'center' }}>
-                        <span style={{ ...s.scorePill, color: scoreColor, background: scoreBg }}>
-                          {a.totalScore}%
-                        </span>
-                      </div>
-                      <div style={{ flex:1, textAlign:'center' }}>
-                        <span style={{ ...s.scorePill, color: gradeColor, background: scoreBg }}>
-                          {a.grade || 'N/A'}
-                        </span>
-                      </div>
-                      <div style={{ flex:1, textAlign:'right', fontSize:'12px', color:'#94a3b8' }}>
-                        {new Date(a.createdAt).toLocaleDateString('en-IN', {
-                          day:'numeric', month:'short', year:'numeric'
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-        ) : (
-          /* ── DASHBOARD VIEW ── */
-          <>
-            {/* SECTION HEADER */}
-            <div style={s.sectionHeader}>
-              <div>
-                <h2 style={s.sectionTitle}>Interview Prep</h2>
-                <p style={s.sectionSub}>Choose a company and role to begin</p>
-              </div>
-            </div>
-
-            {/* FILTER PILLS */}
-            <div style={s.filters}>
-              {CATEGORIES.map(c => (
-                <button
-                  key={c}
-                  style={filter === c ? s.pillActive : s.pill}
-                  onMouseEnter={e => { if (filter !== c) e.target.style.background='#f1f5f9'; }}
-                  onMouseLeave={e => { if (filter !== c) e.target.style.background='#fff'; }}
-                  onClick={() => setFilter(c)}
-                >
-                  {c}
-                </button>
               ))}
             </div>
 
-            {/* INTERVIEW CARDS */}
-            <div style={s.cardsGrid}>
-              {filtered.map(iv => (
-                <div
-                  key={iv.id}
-                  style={{
-                    ...s.card,
-                    transform:  hoveredCard === iv.id ? 'translateY(-6px)' : 'translateY(0)',
-                    boxShadow:  hoveredCard === iv.id
-                      ? `0 12px 32px rgba(0,0,0,0.12), 0 0 0 2px ${iv.color}22`
-                      : '0 1px 3px rgba(0,0,0,0.06)',
-                  }}
-                  onMouseEnter={() => setHoveredCard(iv.id)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                >
-                  <div style={{ ...s.cardIconBox, background: iv.bg }}>
-                    <span style={s.cardIcon}>{iv.icon}</span>
-                    <span style={{ ...s.cardCategoryBadge, color: iv.color, background: iv.bg, border:`1px solid ${iv.color}33` }}>
-                      {iv.category}
+            {/* ── MY ATTEMPTS VIEW ── */}
+            {showAttempts ? (
+              <>
+                <div className="db-section-header">
+                  <div>
+                    <div style={{ fontSize:'16px', fontWeight:'700', color:'#0f172a' }}>All Interview History</div>
+                    <div style={{ fontSize:'12px', color:'#64748b', marginTop:'2px' }}>Click any row to view full AI feedback</div>
+                  </div>
+                  {attempts.length > 0 && (
+                    <span style={{ padding:'3px 12px', background:'#eff6ff', color:'#3b82f6', borderRadius:'99px', fontSize:'12px', fontWeight:'600' }}>
+                      {attempts.length} total
                     </span>
-                  </div>
-                  <div style={s.cardBody}>
-                    <h3 style={s.cardCompany}>{iv.company}</h3>
-                    <p style={s.cardRole}>{iv.role}</p>
-                  </div>
-                  <div style={s.cardFooter}>
-                    <button
-                      style={{
-                        ...s.startBtn,
-                        background: hoveredCard === iv.id ? iv.color : '#fff',
-                        color:      hoveredCard === iv.id ? '#fff'    : iv.color,
-                        border:     `2px solid ${iv.color}`,
-                      }}
-                      onClick={() => navigate(`/interview/${iv.id}`, { state: iv })}
-                    >
-                      {hoveredCard === iv.id ? 'Start Interview →' : 'Start Interview'}
-                    </button>
-                  </div>
+                  )}
                 </div>
-              ))}
-            </div>
 
-            {/* RECENT ATTEMPTS */}
-            <div style={s.sectionHeader}>
-              <div>
-                <h2 style={s.sectionTitle}>Recent Attempts</h2>
-                <p style={s.sectionSub}>Click any row to view full AI feedback</p>
-              </div>
-              {attempts.length > 0 && (
-                <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                  <span style={s.countBadge}>{attempts.length} total</span>
-                  <button
-                    style={s.viewAllBtn}
-                    onClick={() => setActiveNav('My Attempts')}
-                  >
-                    View all →
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {loading ? (
-              <div style={s.emptyState}>
-                <div style={s.emptyIcon}>⏳</div>
-                <p style={s.emptyText}>Loading your attempts...</p>
-              </div>
-            ) : attempts.length === 0 ? (
-              <div style={s.emptyState}>
-                <div style={s.emptyIcon}>🎯</div>
-                <p style={s.emptyText}>No attempts yet</p>
-                <p style={s.emptySub}>Start your first interview above to see results here</p>
-                <button
-                  style={s.emptyBtn}
-                  onMouseEnter={e => e.target.style.background='#1d4ed8'}
-                  onMouseLeave={e => e.target.style.background='#3b82f6'}
-                  onClick={() => window.scrollTo({ top: 0, behavior:'smooth' })}
-                >
-                  Start Practicing →
-                </button>
-              </div>
+                {loading ? (
+                  <EmptyState icon="⏳" title="Loading..." sub="" />
+                ) : attempts.length === 0 ? (
+                  <EmptyState icon="🎯" title="No attempts yet" sub="Start your first interview to see results here"
+                    btn="Go to Dashboard →" onBtn={() => setActiveNav('Dashboard')} />
+                ) : (
+                  <div style={{ background:'#fff', borderRadius:'14px', border:'1px solid #f1f5f9', overflow:'hidden', marginBottom:'20px' }}>
+                    <div style={{ display:'flex', padding:'10px 16px', background:'#f8fafc', borderBottom:'1px solid #f1f5f9', fontSize:'11px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', letterSpacing:'0.5px' }}>
+                      <span style={{ flex:2 }}>Role & Company</span>
+                      <span className="db-col-cat" style={{ flex:1, textAlign:'center' }}>Category</span>
+                      <span style={{ flex:1, textAlign:'center' }}>Score</span>
+                      <span className="db-col-date" style={{ flex:1, textAlign:'right' }}>Date</span>
+                    </div>
+                    {attempts.map((a, i) => (
+                      <AttemptRow key={a._id} a={a} i={i} navigate={navigate} />
+                    ))}
+                  </div>
+                )}
+              </>
             ) : (
-              <div style={s.attemptList}>
-                <div style={s.tableHeader}>
-                  <span style={{ flex:2 }}>Role & Company</span>
-                  <span style={{ flex:1, textAlign:'center' }}>Category</span>
-                  <span style={{ flex:1, textAlign:'center' }}>Score</span>
-                  <span style={{ flex:1, textAlign:'right'  }}>Date</span>
+              /* ── DASHBOARD VIEW ── */
+              <>
+                {/* Section header */}
+                <div className="db-section-header">
+                  <div>
+                    <div style={{ fontSize:'16px', fontWeight:'700', color:'#0f172a' }}>Interview Prep</div>
+                    <div style={{ fontSize:'12px', color:'#64748b', marginTop:'2px' }}>Choose a company and role to begin</div>
+                  </div>
                 </div>
-                {attempts.slice(0, 5).map((a, i) => {
-                  const scoreColor = a.totalScore >= 70 ? '#16a34a' : a.totalScore >= 50 ? '#d97706' : '#dc2626';
-                  const scoreBg    = a.totalScore >= 70 ? '#dcfce7' : a.totalScore >= 50 ? '#fef9c3' : '#fee2e2';
-                  return (
-                    <div
-                      key={a._id}
+
+                {/* Filter pills */}
+                <div className="db-filters">
+                  {CATEGORIES.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => setFilter(c)}
                       style={{
-                        ...s.tableRow,
-                        background:  hoveredRow === a._id ? '#f0f9ff' : i % 2 === 0 ? '#fff' : '#fafafa',
-                        cursor:      'pointer',
-                        borderLeft:  hoveredRow === a._id ? '3px solid #3b82f6' : '3px solid transparent',
+                        padding:'6px 16px', borderRadius:'99px', fontSize:'13px', fontWeight:'500',
+                        cursor:'pointer', border:'1.5px solid',
+                        transition:'all 0.15s',
+                        background: filter === c ? '#3b82f6' : '#fff',
+                        color:      filter === c ? '#fff'    : '#475569',
+                        borderColor: filter === c ? '#3b82f6' : '#e2e8f0',
                       }}
-                      onMouseEnter={() => setHoveredRow(a._id)}
-                      onMouseLeave={() => setHoveredRow(null)}
-                      onClick={() => navigate(`/results/${a._id}`, { state: { attempt: a } })}
                     >
-                      <div style={{ flex:2, display:'flex', alignItems:'center', gap:'10px' }}>
-                        <div style={s.attemptAvatar}>{a.company?.charAt(0)}</div>
-                        <div>
-                          <div style={s.attemptRole}>{a.role}</div>
-                          <div style={s.attemptCompany}>{a.company}</div>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Interview cards */}
+                <div className="db-cards">
+                  {filtered.map(iv => (
+                    <div
+                      key={iv.id}
+                      className="db-card"
+                      style={{ background:'#fff', borderRadius:'14px', overflow:'hidden', border:`1px solid ${iv.border}`, display:'flex', flexDirection:'column' }}
+                      onMouseEnter={() => setHoveredCard(iv.id)}
+                      onMouseLeave={() => setHoveredCard(null)}
+                    >
+                      {/* Card top color bar */}
+                      <div style={{ height:'4px', background: iv.color }} />
+
+                      <div style={{ padding:'16px 16px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                        <div style={{ width:'40px', height:'40px', borderRadius:'10px', background: iv.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px' }}>
+                          {iv.icon}
                         </div>
-                      </div>
-                      <div style={{ flex:1, textAlign:'center' }}>
-                        <span style={s.categoryPill}>{a.category}</span>
-                      </div>
-                      <div style={{ flex:1, textAlign:'center' }}>
-                        <span style={{ ...s.scorePill, color: scoreColor, background: scoreBg }}>
-                          {a.totalScore}%
+                        <span style={{ fontSize:'10px', fontWeight:'700', padding:'3px 8px', borderRadius:'99px', color: iv.color, background: iv.bg, border:`1px solid ${iv.border}`, letterSpacing:'0.3px' }}>
+                          {iv.category}
                         </span>
                       </div>
-                      <div style={{ flex:1, textAlign:'right', fontSize:'12px', color:'#94a3b8' }}>
-                        {new Date(a.createdAt).toLocaleDateString('en-IN', {
-                          day:'numeric', month:'short', year:'numeric'
-                        })}
+
+                      <div style={{ padding:'0 16px 14px', flex:1 }}>
+                        <div style={{ fontSize:'15px', fontWeight:'800', color:'#0f172a', marginBottom:'2px' }}>{iv.company}</div>
+                        <div style={{ fontSize:'12px', color:'#64748b' }}>{iv.role}</div>
+                      </div>
+
+                      <div style={{ padding:'0 12px 12px' }}>
+                        <button
+                          style={{
+                            width:'100%', padding:'9px', border:`2px solid ${iv.color}`,
+                            borderRadius:'10px', fontSize:'13px', fontWeight:'700', cursor:'pointer',
+                            transition:'all 0.18s',
+                            background: hoveredCard === iv.id ? iv.color : '#fff',
+                            color:      hoveredCard === iv.id ? '#fff'   : iv.color,
+                          }}
+                          onClick={() => navigate(`/interview/${iv.id}`, { state: iv })}
+                        >
+                          {hoveredCard === iv.id ? 'Start Interview →' : 'Start Interview'}
+                        </button>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+
+                {/* Recent attempts */}
+                <div className="db-section-header">
+                  <div>
+                    <div style={{ fontSize:'16px', fontWeight:'700', color:'#0f172a' }}>Recent Attempts</div>
+                    <div style={{ fontSize:'12px', color:'#64748b', marginTop:'2px' }}>Click any row to view full AI feedback</div>
+                  </div>
+                  {attempts.length > 0 && (
+                    <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
+                      <span style={{ padding:'3px 10px', background:'#eff6ff', color:'#3b82f6', borderRadius:'99px', fontSize:'11px', fontWeight:'600' }}>
+                        {attempts.length} total
+                      </span>
+                      <button
+                        style={{ padding:'5px 12px', background:'#fff', border:'1.5px solid #3b82f6', color:'#3b82f6', borderRadius:'8px', fontSize:'12px', fontWeight:'600', cursor:'pointer' }}
+                        onClick={() => setActiveNav('My Attempts')}
+                      >
+                        View all →
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {loading ? (
+                  <EmptyState icon="⏳" title="Loading..." sub="" />
+                ) : attempts.length === 0 ? (
+                  <EmptyState icon="🎯" title="No attempts yet" sub="Start your first interview above to see results here"
+                    btn="Start Practicing →" onBtn={() => window.scrollTo({ top:0, behavior:'smooth' })} />
+                ) : (
+                  <div style={{ background:'#fff', borderRadius:'14px', border:'1px solid #f1f5f9', overflow:'hidden', marginBottom:'20px' }}>
+                    <div style={{ display:'flex', padding:'10px 16px', background:'#f8fafc', borderBottom:'1px solid #f1f5f9', fontSize:'11px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', letterSpacing:'0.5px' }}>
+                      <span style={{ flex:2 }}>Role & Company</span>
+                      <span className="db-col-cat" style={{ flex:1, textAlign:'center' }}>Category</span>
+                      <span style={{ flex:1, textAlign:'center' }}>Score</span>
+                      <span className="db-col-date" style={{ flex:1, textAlign:'right' }}>Date</span>
+                    </div>
+                    {attempts.slice(0, 5).map((a, i) => (
+                      <AttemptRow key={a._id} a={a} i={i} navigate={navigate} />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
-          </>
-        )}
 
-        {/* FOOTER */}
-        <footer style={s.footer}>
-          © {new Date().getFullYear()} MockPrep · All rights reserved to <strong>Dheeraj Kumar</strong>
-        </footer>
+          </div>
 
-      </main>
+          {/* Footer */}
+          <footer style={{ textAlign:'center', padding:'16px', borderTop:'1px solid #e8eaed', background:'#fff', fontSize:'11px', color:'#94a3b8', marginTop:'8px' }}>
+            © {new Date().getFullYear()} MockPrep · All rights reserved to <strong>Dheeraj Kumar</strong>
+          </footer>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── ATTEMPT ROW COMPONENT ─────────────────────────────────────────
+function AttemptRow({ a, i, navigate }) {
+  const [hovered, setHovered] = useState(false);
+  const scoreColor = a.totalScore >= 70 ? '#16a34a' : a.totalScore >= 50 ? '#d97706' : '#dc2626';
+  const scoreBg    = a.totalScore >= 70 ? '#dcfce7' : a.totalScore >= 50 ? '#fef9c3' : '#fee2e2';
+
+  return (
+    <div
+      className="db-attempt-row"
+      style={{ background: hovered ? '#f0f9ff' : i % 2 === 0 ? '#fff' : '#fafafa', borderLeft: hovered ? '3px solid #3b82f6' : '3px solid transparent' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => navigate(`/results/${a._id}`, { state: { attempt: a } })}
+    >
+      <div className="db-col-main">
+        <div style={{ width:'30px', height:'30px', borderRadius:'8px', background:'linear-gradient(135deg,#3b82f6,#8b5cf6)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'12px', flexShrink:0 }}>
+          {a.company?.charAt(0)}
+        </div>
+        <div style={{ minWidth:0 }}>
+          <div style={{ fontSize:'13px', fontWeight:'600', color:'#0f172a', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.role}</div>
+          <div style={{ fontSize:'11px', color:'#64748b', marginTop:'1px' }}>{a.company}</div>
+        </div>
+      </div>
+      <div className="db-col-cat" style={{ flex:1, textAlign:'center' }}>
+        <span style={{ fontSize:'10px', padding:'2px 8px', background:'#f1f5f9', color:'#475569', borderRadius:'99px', fontWeight:'500' }}>{a.category}</span>
+      </div>
+      <div className="db-col-score" style={{ flex:1, textAlign:'center' }}>
+        <span style={{ fontSize:'12px', fontWeight:'700', padding:'3px 10px', borderRadius:'99px', color: scoreColor, background: scoreBg }}>
+          {a.totalScore}%
+        </span>
+      </div>
+      <div className="db-col-date" style={{ flex:1, textAlign:'right', fontSize:'11px', color:'#94a3b8' }}>
+        {new Date(a.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}
+      </div>
     </div>
   );
 }
 
-         const s = {
-  root:              { display:'flex', minHeight:'100vh', background:'#f8fafc', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
-  sidebar:           { background:'#0f172a', display:'flex', flexDirection:'column', transition:'width 0.25s ease', overflow:'hidden', flexShrink:0 },
-  sideTop:           { display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 14px', borderBottom:'1px solid #1e293b' },
-  brand:             { color:'#fff', fontWeight:'800', fontSize:'15px', whiteSpace:'nowrap' },
-  collapseBtn:       { background:'none', border:'none', color:'#64748b', cursor:'pointer', fontSize:'12px', padding:'4px', borderRadius:'4px' },
-  navItem:           { display:'flex', alignItems:'center', gap:'12px', padding:'11px 16px', color:'#94a3b8', cursor:'pointer', transition:'all 0.15s' },
-  navIcon:           { fontSize:'18px', minWidth:'20px', textAlign:'center' },
-  navLabel:          { fontSize:'14px', whiteSpace:'nowrap', fontWeight:'500' },
-  sideFooter:        { marginTop:'auto', borderTop:'1px solid #1e293b', padding:'14px' },
-  userRow:           { display:'flex', alignItems:'center', gap:'10px' },
-  avatar:            { width:'34px', height:'34px', borderRadius:'50%', background:'linear-gradient(135deg,#3b82f6,#8b5cf6)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'14px', flexShrink:0 },
-  userInfo:          { overflow:'hidden' },
-  userName:          { color:'#e2e8f0', fontSize:'12px', fontWeight:'600', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' },
-  logoutBtn:         { background:'none', border:'none', color:'#ef4444', fontSize:'11px', cursor:'pointer', padding:0, marginTop:'2px' },
-  main:              { flex:1, padding:'16px', overflowY:'auto', overflowX:'hidden', display:'flex', flexDirection:'column', minWidth:0 },
-  topbar:            { display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'16px', flexWrap:'wrap', gap:'10px' },
-  greeting:          { fontSize:'20px', fontWeight:'800', color:'#0f172a', margin:'0 0 4px' },
-  greetingSub:       { fontSize:'13px', color:'#64748b', margin:0 },
-  topRight:          { display:'flex', alignItems:'center', gap:'10px' },
-  searchBox:         { display:'flex', alignItems:'center', gap:'8px', background:'#fff', border:'1.5px solid #e2e8f0', borderRadius:'10px', padding:'8px 12px' },
-  searchInput:       { border:'none', outline:'none', fontSize:'13px', color:'#334155', width:'140px', background:'transparent' },
-  statsGrid:         { display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'10px', marginBottom:'20px' },
-  statCard:          { background:'#fff', borderRadius:'12px', padding:'14px', display:'flex', alignItems:'center', gap:'10px', boxShadow:'0 1px 3px rgba(0,0,0,0.06)' },
-  statIcon:          { width:'38px', height:'38px', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px', flexShrink:0 },
-  statLabel:         { fontSize:'11px', color:'#64748b', marginBottom:'3px' },
-  statVal:           { fontSize:'20px', fontWeight:'800' },
-  sectionHeader:     { display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px', flexWrap:'wrap', gap:'8px' },
-  sectionTitle:      { fontSize:'16px', fontWeight:'800', color:'#0f172a', margin:'0 0 2px' },
-  sectionSub:        { fontSize:'12px', color:'#64748b', margin:0 },
-  countBadge:        { padding:'3px 10px', background:'#eff6ff', color:'#3b82f6', borderRadius:'99px', fontSize:'11px', fontWeight:'600' },
-  viewAllBtn:        { padding:'5px 12px', background:'#fff', border:'1.5px solid #3b82f6', color:'#3b82f6', borderRadius:'8px', fontSize:'12px', fontWeight:'600', cursor:'pointer' },
-  filters:           { display:'flex', gap:'6px', marginBottom:'14px', flexWrap:'wrap' },
-  pill:              { padding:'6px 14px', borderRadius:'99px', border:'1.5px solid #e2e8f0', background:'#fff', fontSize:'12px', color:'#475569', cursor:'pointer', fontWeight:'500' },
-  pillActive:        { padding:'6px 14px', borderRadius:'99px', border:'1.5px solid #3b82f6', background:'#3b82f6', fontSize:'12px', color:'#fff', cursor:'pointer', fontWeight:'600' },
-  cardsGrid:         { display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(150px,1fr))', gap:'12px', marginBottom:'28px' },
-  card:              { background:'#fff', borderRadius:'14px', overflow:'hidden', border:'1px solid #f1f5f9', display:'flex', flexDirection:'column', transition:'transform 0.2s ease, box-shadow 0.2s ease', cursor:'pointer' },
-  cardIconBox:       { padding:'14px 14px 10px', display:'flex', alignItems:'center', justifyContent:'space-between' },
-  cardIcon:          { fontSize:'24px' },
-  cardCategoryBadge: { fontSize:'9px', fontWeight:'700', padding:'2px 8px', borderRadius:'99px', letterSpacing:'0.3px' },
-  cardBody:          { padding:'0 14px 10px', flex:1 },
-  cardCompany:       { fontSize:'14px', fontWeight:'800', color:'#0f172a', margin:'0 0 2px' },
-  cardRole:          { fontSize:'11px', color:'#64748b', margin:0 },
-  cardFooter:        { padding:'0 12px 12px' },
-  startBtn:          { width:'100%', padding:'8px', border:'none', borderRadius:'8px', fontSize:'12px', fontWeight:'700', cursor:'pointer', transition:'all 0.2s ease' },
-  attemptList:       { background:'#fff', borderRadius:'12px', border:'1px solid #f1f5f9', overflow:'hidden', marginBottom:'20px' },
-  tableHeader:       { display:'flex', padding:'10px 12px', background:'#f8fafc', borderBottom:'1px solid #f1f5f9', fontSize:'11px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', letterSpacing:'0.5px' },
-  tableRow:          { display:'flex', alignItems:'center', padding:'11px 12px', borderBottom:'1px solid #f8fafc', transition:'all 0.15s' },
-  attemptAvatar:     { width:'28px', height:'28px', borderRadius:'6px', background:'linear-gradient(135deg,#3b82f6,#8b5cf6)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'11px', flexShrink:0 },
-  attemptRole:       { fontSize:'13px', fontWeight:'600', color:'#0f172a' },
-  attemptCompany:    { fontSize:'11px', color:'#64748b', marginTop:'1px' },
-  categoryPill:      { fontSize:'10px', padding:'2px 8px', background:'#f1f5f9', color:'#475569', borderRadius:'99px', fontWeight:'500' },
-  scorePill:         { fontSize:'12px', fontWeight:'700', padding:'2px 10px', borderRadius:'99px' },
-  emptyState:        { textAlign:'center', padding:'40px 16px', background:'#fff', borderRadius:'12px', border:'1px solid #f1f5f9', marginBottom:'20px' },
-  emptyIcon:         { fontSize:'36px', marginBottom:'10px' },
-  emptyText:         { fontSize:'15px', fontWeight:'700', color:'#334155', margin:'0 0 6px' },
-  emptySub:          { fontSize:'12px', color:'#94a3b8', margin:'0 0 16px' },
-  emptyBtn:          { padding:'10px 20px', background:'#3b82f6', color:'#fff', border:'none', borderRadius:'10px', fontSize:'13px', fontWeight:'600', cursor:'pointer' },
-  footer:            { textAlign:'center', padding:'16px', borderTop:'1px solid #e2e8f0', marginTop:'auto', fontSize:'11px', color:'#94a3b8' },
-};
+// ── EMPTY STATE COMPONENT ─────────────────────────────────────────
+function EmptyState({ icon, title, sub, btn, onBtn }) {
+  return (
+    <div style={{ textAlign:'center', padding:'44px 20px', background:'#fff', borderRadius:'14px', border:'1px solid #f1f5f9', marginBottom:'20px' }}>
+      <div style={{ fontSize:'38px', marginBottom:'12px' }}>{icon}</div>
+      <div style={{ fontSize:'15px', fontWeight:'700', color:'#334155', marginBottom:'6px' }}>{title}</div>
+      {sub && <div style={{ fontSize:'12px', color:'#94a3b8', marginBottom:'16px' }}>{sub}</div>}
+      {btn && onBtn && (
+        <button
+          style={{ padding:'10px 22px', background:'#3b82f6', color:'#fff', border:'none', borderRadius:'10px', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}
+          onClick={onBtn}
+        >
+          {btn}
+        </button>
+      )}
+    </div>
+  );
+}
