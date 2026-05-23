@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { saveAttempt, generateQuestions, evaluateAnswers } from '../services/api';
-
+ 
 const TIMER_SECONDS = 180;
-
+ 
 const CATEGORY_COLORS = {
   'Full Stack': { color:'#3b82f6', bg:'#eff6ff', light:'#dbeafe' },
   Frontend:     { color:'#f59e0b', bg:'#fffbeb', light:'#fde68a' },
@@ -13,13 +13,26 @@ const CATEGORY_COLORS = {
   Sales:        { color:'#f97316', bg:'#fff7ed', light:'#fed7aa' },
   General:      { color:'#8b5cf6', bg:'#f5f3ff', light:'#ddd6fe' },
 };
-
+ 
+// ── RESPONSIVE HOOK ──────────────────────────────────────────────────
+function useWindowWidth() {
+  const [width, setWidth] = useState(window.innerWidth);
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return width;
+}
+ 
 export default function InterviewRoom() {
   const { state: interview } = useLocation();
   const navigate = useNavigate();
-
+  const windowWidth = useWindowWidth();
+  const isDesktop = windowWidth >= 768;
+ 
   const theme = CATEGORY_COLORS[interview?.category] || CATEGORY_COLORS['General'];
-
+ 
   const [questions,        setQuestions]        = useState([]);
   const [loadingQ,         setLoadingQ]         = useState(false);
   const [step,             setStep]             = useState(0);
@@ -31,46 +44,45 @@ export default function InterviewRoom() {
   const [started,          setStarted]          = useState(false);
   const [muted,            setMuted]            = useState(false);
   const [permissionStatus, setPermissionStatus] = useState('idle');
-
+ 
   const recognitionRef = useRef(null);
   const timerRef       = useRef(null);
   const videoRef       = useRef(null);
   const streamRef      = useRef(null);
   const mutedRef       = useRef(false);
-
-  useEffect(() => { mutedRef.current = muted; }, [muted]);
-
-  // ── FETCH QUESTIONS ──────────────────────────────────────────────
  
-useEffect(() => {
-  if (permissionStatus !== 'granted') return;
-  setLoadingQ(true);
-
-  generateQuestions({
-    role: interview?.role || 'Software Engineer',
-    company: interview?.company || 'General',
-    category: interview?.category || 'General',
-  })
-    .then(({ data }) => {
-      setQuestions(data.questions);
-      toast.success('Questions ready!');
+  useEffect(() => { mutedRef.current = muted; }, [muted]);
+ 
+  // ── FETCH QUESTIONS ──────────────────────────────────────────────
+  useEffect(() => {
+    if (permissionStatus !== 'granted') return;
+    setLoadingQ(true);
+ 
+    generateQuestions({
+      role: interview?.role || 'Software Engineer',
+      company: interview?.company || 'General',
+      category: interview?.category || 'General',
     })
-    .catch(() => {
-      toast.error('Using default questions.');
-      setQuestions([
-        'Tell me about yourself and your experience.',
-        'What are your key technical strengths?',
-        'Describe a challenging project you worked on.',
-        'How do you handle tight deadlines?',
-        'Where do you see yourself in 3 years?',
-        'What is your biggest professional achievement?',
-        'How do you keep your technical skills up to date?',
-      ]);
-    })
-    .finally(() => setLoadingQ(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [permissionStatus]);
-
+      .then(({ data }) => {
+        setQuestions(data.questions);
+        toast.success('Questions ready!');
+      })
+      .catch(() => {
+        toast.error('Using default questions.');
+        setQuestions([
+          'Tell me about yourself and your experience.',
+          'What are your key technical strengths?',
+          'Describe a challenging project you worked on.',
+          'How do you handle tight deadlines?',
+          'Where do you see yourself in 3 years?',
+          'What is your biggest professional achievement?',
+          'How do you keep your technical skills up to date?',
+        ]);
+      })
+      .finally(() => setLoadingQ(false));
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissionStatus]);
+ 
   // ── SPEECH ──────────────────────────────────────────────────────
   const speak = (text, onDone) => {
     if (mutedRef.current) { if (onDone) onDone(); return; }
@@ -91,7 +103,7 @@ useEffect(() => {
     if (onDone) utterance.onend = onDone;
     window.speechSynthesis.speak(utterance);
   };
-
+ 
   // ── PERMISSIONS ─────────────────────────────────────────────────
   const requestPermissions = async () => {
     setPermissionStatus('asking');
@@ -109,18 +121,16 @@ useEffect(() => {
       toast.error('Camera/mic access denied.');
     }
   };
-
+ 
   const stopCamera = () => {
     streamRef.current?.getTracks().forEach(t => t.stop());
   };
-
-  // ── START INTERVIEW ──────────────────────────────────────────────
  
+  // ── START INTERVIEW ──────────────────────────────────────────────
   useEffect(() => {
     if (!started) return;
     if (streamRef.current && videoRef.current) {
       videoRef.current.srcObject = streamRef.current;
-
     }
     setTimeout(() => {
       speak(
@@ -133,9 +143,8 @@ useEffect(() => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [started]);
-
-  // ── TIMER ────────────────────────────────────────────────────────
  
+  // ── TIMER ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!started) return;
     if (timeLeft <= 0) { handleNext(); return; }
@@ -143,9 +152,8 @@ useEffect(() => {
     return () => clearTimeout(timerRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, started]);
-
-  // ── STEP CHANGE ──────────────────────────────────────────────────
  
+  // ── STEP CHANGE ──────────────────────────────────────────────────
   useEffect(() => {
     setTimeLeft(TIMER_SECONDS);
     setCurrent('');
@@ -157,7 +165,7 @@ useEffect(() => {
     }
      // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
-
+ 
   // ── VOICE INPUT ──────────────────────────────────────────────────
   const startListening = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -176,23 +184,22 @@ useEffect(() => {
     r.start();
     setListening(true);
   };
-
+ 
   const stopListening = () => {
     recognitionRef.current?.stop();
     setListening(false);
   };
-
+ 
   // ── SCORING (fallback only) ──────────────────────────────────────
   const scoreAnswer = (text) => {
-  // Give 0 for skipped answers
-  if (text.trim() === 'I need to skip this question.') return 0;
-  const w = text.trim().split(/\s+/).length;
-  if (w >= 60) return Math.floor(Math.random() * 20) + 80;
-  if (w >= 30) return Math.floor(Math.random() * 20) + 60;
-  if (w >= 10) return Math.floor(Math.random() * 20) + 40;
-  return Math.floor(Math.random() * 20) + 20;
-};
-
+    if (text.trim() === 'I need to skip this question.') return 0;
+    const w = text.trim().split(/\s+/).length;
+    if (w >= 60) return Math.floor(Math.random() * 20) + 80;
+    if (w >= 30) return Math.floor(Math.random() * 20) + 60;
+    if (w >= 10) return Math.floor(Math.random() * 20) + 40;
+    return Math.floor(Math.random() * 20) + 20;
+  };
+ 
   // ── NEXT ─────────────────────────────────────────────────────────
   const handleNext = () => {
     if (!current.trim()) {
@@ -210,7 +217,7 @@ useEffect(() => {
       submitInterview(saved);
     }
   };
-
+ 
   // ── SUBMIT ───────────────────────────────────────────────────────
   const submitInterview = async (finalAnswers) => {
     speak('Thank you for completing the interview. Our AI is now analyzing your answers. Please wait.');
@@ -218,17 +225,15 @@ useEffect(() => {
     stopListening();
     clearTimeout(timerRef.current);
     setSubmitting(true);
-
+ 
     try {
-      // Step 1 — AI evaluates all answers
       const { data: evaluation } = await evaluateAnswers({
         role:     interview?.role     || 'Software Engineer',
         company:  interview?.company  || 'General',
         category: interview?.category || 'General',
         answers:  finalAnswers,
       });
-
-      // Step 2 — Merge AI scores into answers
+ 
       const scoredAnswers = finalAnswers.map((a, i) => ({
         ...a,
         score:       evaluation.answers[i]?.score       ?? 50,
@@ -237,8 +242,7 @@ useEffect(() => {
         improvement: evaluation.answers[i]?.improvement ?? '',
         idealAnswer: evaluation.answers[i]?.idealAnswer ?? '',
       }));
-
-      // Step 3 — Save to MongoDB with all new fields
+ 
       const { data } = await saveAttempt({
         company:          interview?.company  || 'General',
         role:             interview?.role     || 'Software Engineer',
@@ -251,12 +255,12 @@ useEffect(() => {
         weakerSections:   evaluation.weakerSections   || [],
         improvementAreas: evaluation.improvementAreas || [],
       });
-
+ 
       toast.success('AI evaluation complete!');
       navigate(`/results/${data._id}`, {
         state: { attempt: data, evaluation }
       });
-
+ 
     } catch (err) {
       toast.error('AI evaluation failed. Saving with basic scoring.');
       const totalScore = Math.round(
@@ -282,7 +286,7 @@ useEffect(() => {
       }
     }
   };
-
+ 
   // ── GUARD ────────────────────────────────────────────────────────
   if (!interview) return (
     <div style={s.fullCenter}>
@@ -295,7 +299,7 @@ useEffect(() => {
       </button>
     </div>
   );
-
+ 
   // ── SCREEN 1 — PERMISSION ────────────────────────────────────────
   if (permissionStatus !== 'granted') return (
     <div style={s.prePage}>
@@ -392,7 +396,7 @@ useEffect(() => {
       </footer>
     </div>
   );
-
+ 
   // ── SCREEN 2 — LOADING QUESTIONS ─────────────────────────────────
   if (loadingQ) return (
     <div style={s.fullCenter}>
@@ -415,7 +419,7 @@ useEffect(() => {
       </div>
     </div>
   );
-
+ 
   // ── SCREEN 3 — PRE-START INFO ────────────────────────────────────
   if (!started) return (
     <div style={s.prePage}>
@@ -480,14 +484,26 @@ useEffect(() => {
       </footer>
     </div>
   );
-
+ 
   // ── SCREEN 4 — INTERVIEW ROOM ────────────────────────────────────
   const progress   = (step / questions.length) * 100;
   const timerColor = timeLeft <= 30 ? '#dc2626' : timeLeft <= 60 ? '#d97706' : '#16a34a';
   const timerBg    = timeLeft <= 30 ? '#fef2f2' : timeLeft <= 60 ? '#fffbeb' : '#f0fdf4';
-
+ 
+  // Responsive grid: 2 columns on desktop (left takes more space), 1 column on mobile
+  const roomGridStyle = {
+    ...s.roomGrid,
+    gridTemplateColumns: isDesktop ? '1fr 320px' : '1fr',
+  };
+ 
+  // Camera: fixed compact size on desktop, full-width on mobile
+  const camWrapStyle = isDesktop
+    ? { ...s.camWrap, aspectRatio: '4/3' }
+    : { ...s.camWrap, aspectRatio: '16/9', maxHeight: '220px' };
+ 
   return (
     <div style={s.roomPage}>
+      {/* ── NAV ── */}
       <div style={{ ...s.roomNav, borderBottom:`3px solid ${theme.color}` }}>
         <div style={s.roomNavLeft}>
           <span style={s.roomBrand}>🎯 MockPrep</span>
@@ -516,15 +532,19 @@ useEffect(() => {
           </div>
         </div>
       </div>
-
+ 
+      {/* ── PROGRESS ── */}
       <div style={s.progressWrap}>
         <div style={s.progressTrack}>
           <div style={{ ...s.progressFill, width:`${progress}%`, background: theme.color }} />
         </div>
         <span style={s.progressLabel}>Q{step + 1} / {questions.length}</span>
       </div>
-
-      <div style={s.roomGrid}>
+ 
+      {/* ── MAIN GRID ── */}
+      <div style={roomGridStyle}>
+ 
+        {/* ── LEFT: Question + Answer ── */}
         <div style={s.roomLeft}>
           <div style={{ ...s.qCard, borderLeft:`4px solid ${theme.color}` }}>
             <span style={{ ...s.qBadge, color: theme.color, background: theme.bg }}>
@@ -532,15 +552,15 @@ useEffect(() => {
             </span>
             <p style={s.qText}>{questions[step]}</p>
           </div>
-
+ 
           <textarea
             style={s.textarea}
             placeholder="Type your answer here, or click Start Voice below..."
             value={current}
             onChange={e => setCurrent(e.target.value)}
-            rows={7}
+            rows={isDesktop ? 9 : 7}
           />
-
+ 
           <div style={s.voiceRow}>
             {!listening ? (
               <button style={{ ...s.voiceBtn, background: theme.color }} onClick={startListening}>
@@ -556,7 +576,7 @@ useEffect(() => {
               {current.length} chars · ~{current.trim().split(/\s+/).filter(Boolean).length} words
             </div>
           </div>
-
+ 
           <div style={s.actionRow}>
             <button style={s.skipBtn} onClick={() => setCurrent('I need to skip this question.')}>
               Skip
@@ -574,9 +594,10 @@ useEffect(() => {
             </button>
           </div>
         </div>
-
+ 
+        {/* ── RIGHT: Camera + Pills + Tips ── */}
         <div style={s.roomRight}>
-          <div style={s.camWrap}>
+          <div style={camWrapStyle}>
             <video ref={videoRef} autoPlay muted playsInline style={s.video} />
             <div style={s.camOverlayTop}>
               <span style={s.recPill}>
@@ -587,7 +608,7 @@ useEffect(() => {
               {interview.company} Interview
             </div>
           </div>
-
+ 
           <div style={s.pillsWrap}>
             <p style={s.pillsLabel}>Progress</p>
             <div style={s.pillsRow}>
@@ -607,7 +628,7 @@ useEffect(() => {
               ))}
             </div>
           </div>
-
+ 
           <div style={{ ...s.tipsBox, borderColor: theme.light }}>
             <p style={{ ...s.tipsTitle, color: theme.color }}>💡 Quick tips</p>
             <p style={s.tipText}>Give detailed answers — longer responses score higher.</p>
@@ -616,14 +637,14 @@ useEffect(() => {
           </div>
         </div>
       </div>
-
+ 
       <footer style={s.roomFooter}>
         © {new Date().getFullYear()} MockPrep · All rights reserved to <strong>Dheeraj Kumar</strong>
       </footer>
     </div>
   );
 }
-
+ 
 const s = {
   prePage:          { minHeight:'100vh', background:'#f8fafc', display:'flex', flexDirection:'column', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
   nav:              { display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 32px', background:'#fff', borderBottom:'1px solid #e2e8f0', boxShadow:'0 1px 3px rgba(0,0,0,0.04)' },
@@ -660,7 +681,8 @@ const s = {
   progressTrack:    { flex:1, height:'6px', background:'#e2e8f0', borderRadius:'99px', overflow:'hidden' },
   progressFill:     { height:'6px', borderRadius:'99px', transition:'width 0.4s' },
   progressLabel:    { fontSize:'12px', color:'#64748b', fontWeight:'500', minWidth:'60px', textAlign:'right' },
-  roomGrid:         { display:'grid', gridTemplateColumns:'1fr', gap:'16px', padding:'16px', flex:1 },
+  // roomGrid: base style — gridTemplateColumns is set dynamically above
+  roomGrid:         { display:'grid', gap:'16px', padding:'16px', flex:1, alignItems:'start' },
   roomLeft:         { display:'flex', flexDirection:'column', gap:'14px' },
   roomRight:        { display:'flex', flexDirection:'column', gap:'12px' },
   qCard:            { background:'#fff', borderRadius:'12px', padding:'20px 24px', boxShadow:'0 1px 3px rgba(0,0,0,0.06)' },
@@ -674,7 +696,7 @@ const s = {
   actionRow:        { display:'flex', justifyContent:'space-between', alignItems:'center' },
   skipBtn:          { padding:'10px 20px', background:'#f1f5f9', color:'#475569', border:'none', borderRadius:'8px', fontSize:'13px', cursor:'pointer', fontWeight:'500' },
   nextBtn:          { padding:'12px 28px', color:'#fff', border:'none', borderRadius:'10px', fontSize:'15px', fontWeight:'700', cursor:'pointer' },
-  camWrap:          { borderRadius:'14px', overflow:'hidden', position:'relative', background:'#0f172a', aspectRatio:'4/3' },
+  camWrap:          { borderRadius:'14px', overflow:'hidden', position:'relative', background:'#0f172a' },
   video:            { width:'100%', height:'100%', objectFit:'cover', display:'block', transform:'scaleX(-1)' },
   camOverlayTop:    { position:'absolute', top:'10px', left:'10px', right:'10px', display:'flex', justifyContent:'space-between' },
   recPill:          { display:'flex', alignItems:'center', gap:'6px', background:'rgba(0,0,0,0.55)', color:'#fff', fontSize:'11px', fontWeight:'700', padding:'4px 10px', borderRadius:'99px', letterSpacing:'1px' },
@@ -692,7 +714,7 @@ const s = {
   tipText:          { fontSize:'12px', color:'#64748b', margin:'0 0 6px', lineHeight:'1.5' },
   roomFooter:       { textAlign:'center', padding:'14px', borderTop:'1px solid #e2e8f0', background:'#fff', fontSize:'12px', color:'#94a3b8' },
 };
-
+ 
 const ps = {
   permGrid:    { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', width:'100%' },
   permCard:    { borderRadius:'14px', padding:'20px 16px', display:'flex', flexDirection:'column', alignItems:'center', gap:'8px', background:'#fff', transition:'border 0.3s' },
