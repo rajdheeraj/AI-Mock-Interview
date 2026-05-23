@@ -131,58 +131,6 @@ function scoreBg(score) {
   return score >= 70 ? '#dcfce7' : score >= 50 ? '#fef9c3' : '#fee2e2';
 }
 
-// ── ATTEMPT ROW (dashboard preview) ──────────────────────────────
-function AttemptRow({ a, i, navigate }) {
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <div
-      className="db-attempt-row"
-      style={{
-        background: hovered ? '#f0f9ff' : i % 2 === 0 ? '#fff' : '#fafafa',
-        borderLeft: hovered ? '3px solid #3b82f6' : '3px solid transparent',
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => navigate(`/results/${a._id}`, { state: { attempt: a } })}
-    >
-      <div className="db-col-main">
-        <div style={{
-          width: '30px', height: '30px', borderRadius: '8px',
-          background: 'linear-gradient(135deg,#3b82f6,#8b5cf6)',
-          color: '#fff', display: 'flex', alignItems: 'center',
-          justifyContent: 'center', fontWeight: '700', fontSize: '12px', flexShrink: 0,
-        }}>
-          {a.company?.charAt(0)}
-        </div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a' }}>{a.role}</div>
-          <div style={{ fontSize: '11px', color: '#64748b' }}>{a.company}</div>
-        </div>
-      </div>
-
-      <div className="db-col-cat" style={{ flex: 1, textAlign: 'center' }}>
-        <span style={{ fontSize: '10px', padding: '2px 8px', background: '#f1f5f9', borderRadius: '99px' }}>
-          {a.category}
-        </span>
-      </div>
-
-      <div style={{ flex: 1, textAlign: 'center' }}>
-        <span style={{
-          fontSize: '12px', fontWeight: '700', padding: '3px 10px',
-          borderRadius: '99px', color: scoreColor(a.totalScore), background: scoreBg(a.totalScore),
-        }}>
-          {a.totalScore}%
-        </span>
-      </div>
-
-      <div className="db-col-date" style={{ flex: 1, textAlign: 'right', fontSize: '11px', color: '#94a3b8' }}>
-        {new Date(a.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-      </div>
-    </div>
-  );
-}
-
 // ── ATTEMPT ROW FULL (My Attempts view) ──────────────────────────
 function AttemptRowFull({ a, i, navigate }) {
   const [hovered, setHovered] = useState(false);
@@ -537,47 +485,40 @@ export default function DashboardPage() {
                       <span style={{ flex: 1, textAlign: 'center' }}>Score</span>
                       <span className="db-col-date" style={{ flex: 1, textAlign: 'right' }}>Date</span>
                     </div>
-                   {attempts.slice(0,3).map((a,i)=>(
+                    {attempts.slice(0,3).map((a,i)=>(
   <div
     key={a._id}
     className="db-attempt-row"
     onClick={() =>
       navigate(`/results/${a._id}`, {
-        state: { attempt: a }
+        state:{attempt:a}
       })
     }
-    style={{
-      padding:'12px 16px',
-      borderBottom:'1px solid #f0f0f0',
-      display:'flex',
-      alignItems:'center',
-      justifyContent:'space-between',
-      cursor:'pointer'
-    }}
   >
-    <div>
-      <div style={{fontWeight:'600'}}>
-        {a.role}
-      </div>
-      <div style={{
-        fontSize:'12px',
-        color:'#64748b'
-      }}>
-        {a.company}
+    <div className="db-col-main">
+      <div>
+        <div style={{fontWeight:'600'}}>
+          {a.role}
+        </div>
+        <div style={{fontSize:'12px',color:'#64748b'}}>
+          {a.company}
+        </div>
       </div>
     </div>
 
-    <span
-      style={{
-        color: scoreColor(a.totalScore),
-        background: scoreBg(a.totalScore),
-        padding:'4px 10px',
-        borderRadius:'99px',
-        fontWeight:'700'
-      }}
-    >
-      {a.totalScore}%
-    </span>
+    <div style={{flex:1,textAlign:'center'}}>
+      <span
+        style={{
+          color: scoreColor(a.totalScore),
+          background: scoreBg(a.totalScore),
+          padding:'4px 10px',
+          borderRadius:'99px',
+          fontWeight:'700'
+        }}
+      >
+        {a.totalScore}%
+      </span>
+    </div>
   </div>
 ))}
                   </div>
