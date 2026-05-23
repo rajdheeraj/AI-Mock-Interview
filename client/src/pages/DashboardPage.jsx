@@ -315,187 +315,319 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* ── PAGE CONTENT ── */}
-          <div className="db-content">
+         {/* ── PAGE CONTENT ── */}
+<div className="db-content">
 
-            {/* ── STATS ── */}
-            <div className="db-stats">
-              {[
-                { label:'Total attempts', value: attempts.length,  icon:'📝', color:'#3b82f6', bg:'#eff6ff', border:'#bfdbfe' },
-                { label:'Avg. score',     value: `${avgScore}%`,   icon:'📊', color:'#10b981', bg:'#ecfdf5', border:'#a7f3d0' },
-                { label:'Best score',     value: `${bestScore}%`,  icon:'🏆', color:'#f59e0b', bg:'#fffbeb', border:'#fde68a' },
-                { label:'Companies',      value: '8+',             icon:'🏢', color:'#8b5cf6', bg:'#f5f3ff', border:'#ddd6fe' },
-              ].map(({ label, value, icon, color, bg, border }) => (
-                <div key={label} style={{ background:'#fff', borderRadius:'14px', padding:'16px', display:'flex', alignItems:'center', gap:'12px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)', borderTop:`3px solid ${color}`, border:`1px solid ${border}`, borderTopWidth:'3px' }}>
-                  <div style={{ width:'42px', height:'42px', borderRadius:'12px', background: bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', flexShrink:0 }}>
-                    {icon}
-                  </div>
-                  <div style={{ minWidth:0 }}>
-                    <div style={{ fontSize:'11px', color:'#64748b', marginBottom:'3px', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{label}</div>
-                    <div style={{ fontSize:'22px', fontWeight:'800', color, lineHeight:1 }}>{value}</div>
-                  </div>
-                </div>
-              ))}
+  {/* ── DASHBOARD VIEW (default) ── */}
+  {activeNav === 'Dashboard' && (
+    <>
+      {/* STATS */}
+      <div className="db-stats">
+        {[
+          { label:'Total attempts', value: attempts.length,  icon:'📝', color:'#3b82f6', bg:'#eff6ff', border:'#bfdbfe' },
+          { label:'Avg. score',     value: `${avgScore}%`,   icon:'📊', color:'#10b981', bg:'#ecfdf5', border:'#a7f3d0' },
+          { label:'Best score',     value: `${bestScore}%`,  icon:'🏆', color:'#f59e0b', bg:'#fffbeb', border:'#fde68a' },
+          { label:'Companies',      value: '8+',             icon:'🏢', color:'#8b5cf6', bg:'#f5f3ff', border:'#ddd6fe' },
+        ].map(({ label, value, icon, color, bg, border }) => (
+          <div key={label} style={{ background:'#fff', borderRadius:'14px', padding:'16px', display:'flex', alignItems:'center', gap:'12px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)', borderTop:`3px solid ${color}` }}>
+            <div style={{ width:'42px', height:'42px', borderRadius:'12px', background: bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', flexShrink:0 }}>
+              {icon}
             </div>
-
-            {/* ── MY ATTEMPTS VIEW ── */}
-            {showAttempts ? (
-              <>
-                <div className="db-section-header">
-                  <div>
-                    <div style={{ fontSize:'16px', fontWeight:'700', color:'#0f172a' }}>All Interview History</div>
-                    <div style={{ fontSize:'12px', color:'#64748b', marginTop:'2px' }}>Click any row to view full AI feedback</div>
-                  </div>
-                  {attempts.length > 0 && (
-                    <span style={{ padding:'3px 12px', background:'#eff6ff', color:'#3b82f6', borderRadius:'99px', fontSize:'12px', fontWeight:'600' }}>
-                      {attempts.length} total
-                    </span>
-                  )}
-                </div>
-
-                {loading ? (
-                  <EmptyState icon="⏳" title="Loading..." sub="" />
-                ) : attempts.length === 0 ? (
-                  <EmptyState icon="🎯" title="No attempts yet" sub="Start your first interview to see results here"
-                    btn="Go to Dashboard →" onBtn={() => setActiveNav('Dashboard')} />
-                ) : (
-                  <div style={{ background:'#fff', borderRadius:'14px', border:'1px solid #f1f5f9', overflow:'hidden', marginBottom:'20px' }}>
-                    <div style={{ display:'flex', padding:'10px 16px', background:'#f8fafc', borderBottom:'1px solid #f1f5f9', fontSize:'11px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', letterSpacing:'0.5px' }}>
-                      <span style={{ flex:2 }}>Role & Company</span>
-                      <span className="db-col-cat" style={{ flex:1, textAlign:'center' }}>Category</span>
-                      <span style={{ flex:1, textAlign:'center' }}>Score</span>
-                      <span className="db-col-date" style={{ flex:1, textAlign:'right' }}>Date</span>
-                    </div>
-                    {attempts.map((a, i) => (
-                      <AttemptRow key={a._id} a={a} i={i} navigate={navigate} />
-                    ))}
-                  </div>
-                )}
-              </>
-            ) : (
-              /* ── DASHBOARD VIEW ── */
-              <>
-                {/* Section header */}
-                <div className="db-section-header">
-                  <div>
-                    <div style={{ fontSize:'16px', fontWeight:'700', color:'#0f172a' }}>Interview Prep</div>
-                    <div style={{ fontSize:'12px', color:'#64748b', marginTop:'2px' }}>Choose a company and role to begin</div>
-                  </div>
-                </div>
-
-                {/* Filter pills */}
-                <div className="db-filters">
-                  {CATEGORIES.map(c => (
-                    <button
-                      key={c}
-                      onClick={() => setFilter(c)}
-                      style={{
-                        padding:'6px 16px', borderRadius:'99px', fontSize:'13px', fontWeight:'500',
-                        cursor:'pointer', border:'1.5px solid',
-                        transition:'all 0.15s',
-                        background: filter === c ? '#3b82f6' : '#fff',
-                        color:      filter === c ? '#fff'    : '#475569',
-                        borderColor: filter === c ? '#3b82f6' : '#e2e8f0',
-                      }}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Interview cards */}
-                <div className="db-cards">
-                  {filtered.map(iv => (
-                    <div
-                      key={iv.id}
-                      className="db-card"
-                      style={{ background:'#fff', borderRadius:'14px', overflow:'hidden', border:`1px solid ${iv.border}`, display:'flex', flexDirection:'column' }}
-                      onMouseEnter={() => setHoveredCard(iv.id)}
-                      onMouseLeave={() => setHoveredCard(null)}
-                    >
-                      {/* Card top color bar */}
-                      <div style={{ height:'4px', background: iv.color }} />
-
-                      <div style={{ padding:'16px 16px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                        <div style={{ width:'40px', height:'40px', borderRadius:'10px', background: iv.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px' }}>
-                          {iv.icon}
-                        </div>
-                        <span style={{ fontSize:'10px', fontWeight:'700', padding:'3px 8px', borderRadius:'99px', color: iv.color, background: iv.bg, border:`1px solid ${iv.border}`, letterSpacing:'0.3px' }}>
-                          {iv.category}
-                        </span>
-                      </div>
-
-                      <div style={{ padding:'0 16px 14px', flex:1 }}>
-                        <div style={{ fontSize:'15px', fontWeight:'800', color:'#0f172a', marginBottom:'2px' }}>{iv.company}</div>
-                        <div style={{ fontSize:'12px', color:'#64748b' }}>{iv.role}</div>
-                      </div>
-
-                      <div style={{ padding:'0 12px 12px' }}>
-                        <button
-                          style={{
-                            width:'100%', padding:'9px', border:`2px solid ${iv.color}`,
-                            borderRadius:'10px', fontSize:'13px', fontWeight:'700', cursor:'pointer',
-                            transition:'all 0.18s',
-                            background: hoveredCard === iv.id ? iv.color : '#fff',
-                            color:      hoveredCard === iv.id ? '#fff'   : iv.color,
-                          }}
-                          onClick={() => navigate(`/interview/${iv.id}`, { state: iv })}
-                        >
-                          {hoveredCard === iv.id ? 'Start Interview →' : 'Start Interview'}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Recent attempts */}
-                <div className="db-section-header">
-                  <div>
-                    <div style={{ fontSize:'16px', fontWeight:'700', color:'#0f172a' }}>Recent Attempts</div>
-                    <div style={{ fontSize:'12px', color:'#64748b', marginTop:'2px' }}>Click any row to view full AI feedback</div>
-                  </div>
-                  {attempts.length > 0 && (
-                    <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
-                      <span style={{ padding:'3px 10px', background:'#eff6ff', color:'#3b82f6', borderRadius:'99px', fontSize:'11px', fontWeight:'600' }}>
-                        {attempts.length} total
-                      </span>
-                      <button
-                        style={{ padding:'5px 12px', background:'#fff', border:'1.5px solid #3b82f6', color:'#3b82f6', borderRadius:'8px', fontSize:'12px', fontWeight:'600', cursor:'pointer' }}
-                        onClick={() => setActiveNav('My Attempts')}
-                      >
-                        View all →
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {loading ? (
-                  <EmptyState icon="⏳" title="Loading..." sub="" />
-                ) : attempts.length === 0 ? (
-                  <EmptyState icon="🎯" title="No attempts yet" sub="Start your first interview above to see results here"
-                    btn="Start Practicing →" onBtn={() => window.scrollTo({ top:0, behavior:'smooth' })} />
-                ) : (
-                  <div style={{ background:'#fff', borderRadius:'14px', border:'1px solid #f1f5f9', overflow:'hidden', marginBottom:'20px' }}>
-                    <div style={{ display:'flex', padding:'10px 16px', background:'#f8fafc', borderBottom:'1px solid #f1f5f9', fontSize:'11px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', letterSpacing:'0.5px' }}>
-                      <span style={{ flex:2 }}>Role & Company</span>
-                      <span className="db-col-cat" style={{ flex:1, textAlign:'center' }}>Category</span>
-                      <span style={{ flex:1, textAlign:'center' }}>Score</span>
-                      <span className="db-col-date" style={{ flex:1, textAlign:'right' }}>Date</span>
-                    </div>
-                    {attempts.slice(0, 5).map((a, i) => (
-                      <AttemptRow key={a._id} a={a} i={i} navigate={navigate} />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-
+            <div style={{ minWidth:0 }}>
+              <div style={{ fontSize:'11px', color:'#64748b', marginBottom:'3px' }}>{label}</div>
+              <div style={{ fontSize:'22px', fontWeight:'800', color, lineHeight:1 }}>{value}</div>
+            </div>
           </div>
+        ))}
+      </div>
 
-          {/* Footer */}
-          <footer style={{ textAlign:'center', padding:'16px', borderTop:'1px solid #e8eaed', background:'#fff', fontSize:'11px', color:'#94a3b8', marginTop:'8px' }}>
-            © {new Date().getFullYear()} MockPrep · All rights reserved to <strong>Dheeraj Kumar</strong>
-          </footer>
+      {/* SECTION HEADER */}
+      <div className="db-section-header">
+        <div>
+          <div style={{ fontSize:'16px', fontWeight:'700', color:'#0f172a' }}>Interview Prep</div>
+          <div style={{ fontSize:'12px', color:'#64748b', marginTop:'2px' }}>Choose a company and role to begin</div>
+        </div>
+      </div>
+
+      {/* FILTER PILLS */}
+      <div className="db-filters">
+        {CATEGORIES.map(c => (
+          <button
+            key={c}
+            onClick={() => setFilter(c)}
+            style={{
+              padding:'6px 16px', borderRadius:'99px', fontSize:'13px', fontWeight:'500',
+              cursor:'pointer', border:'1.5px solid', transition:'all 0.15s',
+              background:   filter === c ? '#3b82f6' : '#fff',
+              color:        filter === c ? '#fff'    : '#475569',
+              borderColor:  filter === c ? '#3b82f6' : '#e2e8f0',
+            }}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+
+      {/* INTERVIEW CARDS */}
+      <div className="db-cards">
+        {filtered.map(iv => (
+          <div
+            key={iv.id}
+            className="db-card"
+            style={{ background:'#fff', borderRadius:'14px', overflow:'hidden', border:`1px solid ${iv.border}`, display:'flex', flexDirection:'column' }}
+            onMouseEnter={() => setHoveredCard(iv.id)}
+            onMouseLeave={() => setHoveredCard(null)}
+          >
+            <div style={{ height:'4px', background: iv.color }} />
+            <div style={{ padding:'16px 16px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div style={{ width:'40px', height:'40px', borderRadius:'10px', background: iv.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px' }}>
+                {iv.icon}
+              </div>
+              <span style={{ fontSize:'10px', fontWeight:'700', padding:'3px 8px', borderRadius:'99px', color: iv.color, background: iv.bg, border:`1px solid ${iv.border}` }}>
+                {iv.category}
+              </span>
+            </div>
+            <div style={{ padding:'0 16px 14px', flex:1 }}>
+              <div style={{ fontSize:'15px', fontWeight:'800', color:'#0f172a', marginBottom:'2px' }}>{iv.company}</div>
+              <div style={{ fontSize:'12px', color:'#64748b' }}>{iv.role}</div>
+            </div>
+            <div style={{ padding:'0 12px 12px' }}>
+              <button
+                style={{
+                  width:'100%', padding:'9px', border:`2px solid ${iv.color}`,
+                  borderRadius:'10px', fontSize:'13px', fontWeight:'700', cursor:'pointer', transition:'all 0.18s',
+                  background: hoveredCard === iv.id ? iv.color : '#fff',
+                  color:      hoveredCard === iv.id ? '#fff'   : iv.color,
+                }}
+                onClick={() => navigate(`/interview/${iv.id}`, { state: iv })}
+              >
+                {hoveredCard === iv.id ? 'Start Interview →' : 'Start Interview'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* RECENT ATTEMPTS PREVIEW — only 3 rows */}
+      <div className="db-section-header">
+        <div>
+          <div style={{ fontSize:'16px', fontWeight:'700', color:'#0f172a' }}>Recent Attempts</div>
+          <div style={{ fontSize:'12px', color:'#64748b', marginTop:'2px' }}>Your latest sessions</div>
+        </div>
+        {attempts.length > 0 && (
+          <button
+            style={{ padding:'6px 14px', background:'#3b82f6', color:'#fff', border:'none', borderRadius:'8px', fontSize:'12px', fontWeight:'600', cursor:'pointer' }}
+            onClick={() => setActiveNav('My Attempts')}
+          >
+            View all →
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <EmptyState icon="⏳" title="Loading..." sub="" />
+      ) : attempts.length === 0 ? (
+        <EmptyState icon="🎯" title="No attempts yet" sub="Complete your first interview to see results here" />
+      ) : (
+        <div style={{ background:'#fff', borderRadius:'14px', border:'1px solid #f1f5f9', overflow:'hidden', marginBottom:'20px' }}>
+          <div style={{ display:'flex', padding:'10px 16px', background:'#f8fafc', borderBottom:'1px solid #f1f5f9', fontSize:'11px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', letterSpacing:'0.5px' }}>
+            <span style={{ flex:2 }}>Role & Company</span>
+            <span className="db-col-cat" style={{ flex:1, textAlign:'center' }}>Category</span>
+            <span style={{ flex:1, textAlign:'center' }}>Score</span>
+            <span className="db-col-date" style={{ flex:1, textAlign:'right' }}>Date</span>
+          </div>
+          {attempts.slice(0, 3).map((a, i) => (
+            <AttemptRow key={a._id} a={a} i={i} navigate={navigate} />
+          ))}
+        </div>
+      )}
+    </>
+  )}
+
+  {/* ── MY ATTEMPTS VIEW ── */}
+  {activeNav === 'My Attempts' && (
+    <>
+      <div className="db-section-header">
+        <div>
+          <div style={{ fontSize:'16px', fontWeight:'700', color:'#0f172a' }}>📋 All Interview History</div>
+          <div style={{ fontSize:'12px', color:'#64748b', marginTop:'2px' }}>Click any row to view full AI feedback and analysis</div>
+        </div>
+        {attempts.length > 0 && (
+          <span style={{ padding:'3px 12px', background:'#eff6ff', color:'#3b82f6', borderRadius:'99px', fontSize:'12px', fontWeight:'600' }}>
+            {attempts.length} total
+          </span>
+        )}
+      </div>
+
+      {loading ? (
+        <EmptyState icon="⏳" title="Loading..." sub="" />
+      ) : attempts.length === 0 ? (
+        <EmptyState icon="🎯" title="No attempts yet" sub="Complete your first interview to see your history here"
+          btn="Start Practicing →" onBtn={() => setActiveNav('Dashboard')} />
+      ) : (
+        <div style={{ background:'#fff', borderRadius:'14px', border:'1px solid #f1f5f9', overflow:'hidden', marginBottom:'20px' }}>
+          <div style={{ display:'flex', padding:'10px 16px', background:'#f8fafc', borderBottom:'1px solid #f1f5f9', fontSize:'11px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', letterSpacing:'0.5px' }}>
+            <span style={{ flex:2 }}>Role & Company</span>
+            <span className="db-col-cat" style={{ flex:1, textAlign:'center' }}>Category</span>
+            <span style={{ flex:1, textAlign:'center' }}>Score</span>
+            <span style={{ flex:1, textAlign:'center' }}>Grade</span>
+            <span className="db-col-date" style={{ flex:1, textAlign:'right' }}>Date</span>
+          </div>
+          {attempts.map((a, i) => (
+            <AttemptRowFull key={a._id} a={a} i={i} navigate={navigate} />
+          ))}
+        </div>
+      )}
+    </>
+  )}
+
+  {/* ── ANALYTICS VIEW ── */}
+  {activeNav === 'Analytics' && (
+    <>
+      <div className="db-section-header">
+        <div>
+          <div style={{ fontSize:'16px', fontWeight:'700', color:'#0f172a' }}>📊 Analytics</div>
+          <div style={{ fontSize:'12px', color:'#64748b', marginTop:'2px' }}>Your interview performance overview</div>
+        </div>
+      </div>
+
+      {/* Stats summary */}
+      <div className="db-stats" style={{ marginBottom:'20px' }}>
+        {[
+          { label:'Total attempts', value: attempts.length,  icon:'📝', color:'#3b82f6', bg:'#eff6ff' },
+          { label:'Avg. score',     value: `${avgScore}%`,   icon:'📊', color:'#10b981', bg:'#ecfdf5' },
+          { label:'Best score',     value: `${bestScore}%`,  icon:'🏆', color:'#f59e0b', bg:'#fffbeb' },
+          { label:'Pass rate',      value: attempts.length ? `${Math.round((attempts.filter(a => a.totalScore >= 60).length / attempts.length) * 100)}%` : '0%', icon:'✅', color:'#8b5cf6', bg:'#f5f3ff' },
+        ].map(({ label, value, icon, color, bg }) => (
+          <div key={label} style={{ background:'#fff', borderRadius:'14px', padding:'16px', display:'flex', alignItems:'center', gap:'12px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)', borderTop:`3px solid ${color}` }}>
+            <div style={{ width:'42px', height:'42px', borderRadius:'12px', background: bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', flexShrink:0 }}>
+              {icon}
+            </div>
+            <div>
+              <div style={{ fontSize:'11px', color:'#64748b', marginBottom:'3px' }}>{label}</div>
+              <div style={{ fontSize:'22px', fontWeight:'800', color, lineHeight:1 }}>{value}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Score breakdown by category */}
+      {attempts.length > 0 && (
+        <div style={{ background:'#fff', borderRadius:'14px', padding:'20px', border:'1px solid #f1f5f9', marginBottom:'16px' }}>
+          <div style={{ fontSize:'14px', fontWeight:'700', color:'#0f172a', marginBottom:'16px' }}>Score by Category</div>
+          {['Full Stack','Frontend','Backend','HR','Sales','General'].map(cat => {
+            const catAttempts = attempts.filter(a => a.category === cat);
+            if (catAttempts.length === 0) return null;
+            const avg = Math.round(catAttempts.reduce((s,a) => s + a.totalScore, 0) / catAttempts.length);
+            const color = avg >= 70 ? '#16a34a' : avg >= 50 ? '#d97706' : '#dc2626';
+            const bg    = avg >= 70 ? '#dcfce7' : avg >= 50 ? '#fef9c3' : '#fee2e2';
+            return (
+              <div key={cat} style={{ marginBottom:'12px' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'5px' }}>
+                  <span style={{ fontSize:'13px', fontWeight:'500', color:'#334155' }}>{cat}</span>
+                  <span style={{ fontSize:'12px', fontWeight:'700', color, background: bg, padding:'1px 8px', borderRadius:'99px' }}>
+                    {avg}% · {catAttempts.length} attempt{catAttempts.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div style={{ height:'8px', background:'#f1f5f9', borderRadius:'99px', overflow:'hidden' }}>
+                  <div style={{ height:'8px', width:`${avg}%`, background: color, borderRadius:'99px', transition:'width 0.6s ease' }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Grade distribution */}
+      {attempts.length > 0 && (
+        <div style={{ background:'#fff', borderRadius:'14px', padding:'20px', border:'1px solid #f1f5f9', marginBottom:'16px' }}>
+          <div style={{ fontSize:'14px', fontWeight:'700', color:'#0f172a', marginBottom:'16px' }}>Grade Distribution</div>
+          <div style={{ display:'flex', gap:'10px', flexWrap:'wrap' }}>
+            {['A','B','C','D','F'].map(grade => {
+              const count = attempts.filter(a => a.grade === grade).length;
+              const gradeColor = grade === 'A' ? '#16a34a' : grade === 'B' ? '#2563eb' : grade === 'C' ? '#d97706' : '#dc2626';
+              const gradeBg    = grade === 'A' ? '#dcfce7' : grade === 'B' ? '#eff6ff' : grade === 'C' ? '#fef9c3' : '#fee2e2';
+              return (
+                <div key={grade} style={{ flex:'1', minWidth:'60px', textAlign:'center', background: gradeBg, borderRadius:'12px', padding:'14px 8px', border:`1px solid ${gradeColor}33` }}>
+                  <div style={{ fontSize:'22px', fontWeight:'800', color: gradeColor }}>{grade}</div>
+                  <div style={{ fontSize:'20px', fontWeight:'700', color:'#0f172a' }}>{count}</div>
+                  <div style={{ fontSize:'10px', color:'#64748b' }}>attempt{count !== 1 ? 's' : ''}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {attempts.length === 0 && (
+        <EmptyState icon="📊" title="No data yet" sub="Complete interviews to see your analytics here"
+          btn="Start Practicing →" onBtn={() => setActiveNav('Dashboard')} />
+      )}
+    </>
+  )}
+
+  {/* ── SETTINGS VIEW ── */}
+  {activeNav === 'Settings' && (
+    <>
+      <div className="db-section-header">
+        <div>
+          <div style={{ fontSize:'16px', fontWeight:'700', color:'#0f172a' }}>⚙️ Settings</div>
+          <div style={{ fontSize:'12px', color:'#64748b', marginTop:'2px' }}>Manage your account</div>
+        </div>
+      </div>
+
+      <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
+        {/* Profile card */}
+        <div style={{ background:'#fff', borderRadius:'14px', padding:'20px', border:'1px solid #f1f5f9' }}>
+          <div style={{ fontSize:'13px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'14px' }}>Profile</div>
+          <div style={{ display:'flex', alignItems:'center', gap:'14px', marginBottom:'16px' }}>
+            <div style={{ width:'52px', height:'52px', borderRadius:'50%', background:'linear-gradient(135deg,#3b82f6,#8b5cf6)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'800', fontSize:'20px' }}>
+              {user?.name?.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div style={{ fontSize:'16px', fontWeight:'700', color:'#0f172a' }}>{user?.name}</div>
+              <div style={{ fontSize:'13px', color:'#64748b' }}>{user?.email}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats card */}
+        <div style={{ background:'#fff', borderRadius:'14px', padding:'20px', border:'1px solid #f1f5f9' }}>
+          <div style={{ fontSize:'13px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'14px' }}>Your Progress</div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px' }}>
+            {[
+              { label:'Interviews done', value: attempts.length },
+              { label:'Avg score',       value: `${avgScore}%` },
+              { label:'Best score',      value: `${bestScore}%` },
+              { label:'Pass rate',       value: attempts.length ? `${Math.round((attempts.filter(a => a.totalScore >= 60).length / attempts.length) * 100)}%` : '0%' },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ background:'#f8fafc', borderRadius:'10px', padding:'12px 14px' }}>
+                <div style={{ fontSize:'11px', color:'#64748b', marginBottom:'4px' }}>{label}</div>
+                <div style={{ fontSize:'18px', fontWeight:'800', color:'#0f172a' }}>{value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Sign out */}
+        <div style={{ background:'#fff', borderRadius:'14px', padding:'20px', border:'1px solid #f1f5f9' }}>
+          <div style={{ fontSize:'13px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'14px' }}>Account</div>
+          <button
+            style={{ padding:'11px 24px', background:'#fee2e2', color:'#dc2626', border:'none', borderRadius:'10px', fontSize:'14px', fontWeight:'600', cursor:'pointer', width:'100%' }}
+            onClick={() => { logout(); navigate('/'); }}
+          >
+            Sign out of MockPrep
+          </button>
+        </div>
+      </div>
+    </>
+  )}
+
+</div>
+
+<footer style={{ textAlign:'center', padding:'16px', borderTop:'1px solid #e8eaed', background:'#fff', fontSize:'11px', color:'#94a3b8', marginTop:'8px' }}>
+  © {new Date().getFullYear()} MockPrep · All rights reserved to <strong>Dheeraj Kumar</strong>
+</footer>
         </div>
       </div>
     </>
@@ -503,10 +635,11 @@ export default function DashboardPage() {
 }
 
 // ── ATTEMPT ROW COMPONENT ─────────────────────────────────────────
-function AttemptRow({ a, i, navigate }) {
+function AttemptRowFull({ a, i, navigate }) {
   const [hovered, setHovered] = useState(false);
   const scoreColor = a.totalScore >= 70 ? '#16a34a' : a.totalScore >= 50 ? '#d97706' : '#dc2626';
   const scoreBg    = a.totalScore >= 70 ? '#dcfce7' : a.totalScore >= 50 ? '#fef9c3' : '#fee2e2';
+  const gradeColor = a.grade === 'A' ? '#16a34a' : a.grade === 'B' ? '#2563eb' : a.grade === 'C' ? '#d97706' : '#dc2626';
 
   return (
     <div
@@ -528,9 +661,14 @@ function AttemptRow({ a, i, navigate }) {
       <div className="db-col-cat" style={{ flex:1, textAlign:'center' }}>
         <span style={{ fontSize:'10px', padding:'2px 8px', background:'#f1f5f9', color:'#475569', borderRadius:'99px', fontWeight:'500' }}>{a.category}</span>
       </div>
-      <div className="db-col-score" style={{ flex:1, textAlign:'center' }}>
+      <div style={{ flex:1, textAlign:'center' }}>
         <span style={{ fontSize:'12px', fontWeight:'700', padding:'3px 10px', borderRadius:'99px', color: scoreColor, background: scoreBg }}>
           {a.totalScore}%
+        </span>
+      </div>
+      <div style={{ flex:1, textAlign:'center' }}>
+        <span style={{ fontSize:'12px', fontWeight:'700', padding:'3px 10px', borderRadius:'99px', color: gradeColor, background: scoreBg }}>
+          {a.grade || 'N/A'}
         </span>
       </div>
       <div className="db-col-date" style={{ flex:1, textAlign:'right', fontSize:'11px', color:'#94a3b8' }}>
