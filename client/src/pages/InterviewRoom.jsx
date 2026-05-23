@@ -184,12 +184,14 @@ useEffect(() => {
 
   // ── SCORING (fallback only) ──────────────────────────────────────
   const scoreAnswer = (text) => {
-    const w = text.trim().split(/\s+/).length;
-    if (w >= 60) return Math.floor(Math.random() * 20) + 80;
-    if (w >= 30) return Math.floor(Math.random() * 20) + 60;
-    if (w >= 10) return Math.floor(Math.random() * 20) + 40;
-    return Math.floor(Math.random() * 20) + 20;
-  };
+  // Give 0 for skipped answers
+  if (text.trim() === 'I need to skip this question.') return 0;
+  const w = text.trim().split(/\s+/).length;
+  if (w >= 60) return Math.floor(Math.random() * 20) + 80;
+  if (w >= 30) return Math.floor(Math.random() * 20) + 60;
+  if (w >= 10) return Math.floor(Math.random() * 20) + 40;
+  return Math.floor(Math.random() * 20) + 20;
+};
 
   // ── NEXT ─────────────────────────────────────────────────────────
   const handleNext = () => {
