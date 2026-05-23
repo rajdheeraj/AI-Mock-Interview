@@ -137,6 +137,279 @@ const NAV_ITEMS = [
   { icon:'📊', label:'Analytics'   },
   { icon:'⚙️', label:'Settings'    },
 ];
+// ── ATTEMPT ROW COMPONENT ─────────────────────────────────────────
+function AttemptRow({ a, i, navigate }) {
+  const [hovered, setHovered] = useState(false);
+
+  const scoreColor =
+    a.totalScore >= 70
+      ? '#16a34a'
+      : a.totalScore >= 50
+      ? '#d97706'
+      : '#dc2626';
+
+  const scoreBg =
+    a.totalScore >= 70
+      ? '#dcfce7'
+      : a.totalScore >= 50
+      ? '#fef9c3'
+      : '#fee2e2';
+
+  return (
+    <div
+      className="db-attempt-row"
+      style={{
+        background: hovered
+          ? '#f0f9ff'
+          : i % 2 === 0
+          ? '#fff'
+          : '#fafafa',
+        borderLeft: hovered
+          ? '3px solid #3b82f6'
+          : '3px solid transparent'
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() =>
+        navigate(`/results/${a._id}`, {
+          state: { attempt: a }
+        })
+      }
+    >
+      <div className="db-col-main">
+        <div
+          style={{
+            width:'30px',
+            height:'30px',
+            borderRadius:'8px',
+            background:'linear-gradient(135deg,#3b82f6,#8b5cf6)',
+            color:'#fff',
+            display:'flex',
+            alignItems:'center',
+            justifyContent:'center',
+            fontWeight:'700',
+            fontSize:'12px',
+            flexShrink:0
+          }}
+        >
+          {a.company?.charAt(0)}
+        </div>
+
+        <div style={{ minWidth:0 }}>
+          <div
+            style={{
+              fontSize:'13px',
+              fontWeight:'600',
+              color:'#0f172a'
+            }}
+          >
+            {a.role}
+          </div>
+
+          <div
+            style={{
+              fontSize:'11px',
+              color:'#64748b'
+            }}
+          >
+            {a.company}
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="db-col-cat"
+        style={{
+          flex:1,
+          textAlign:'center'
+        }}
+      >
+        <span
+          style={{
+            fontSize:'10px',
+            padding:'2px 8px',
+            background:'#f1f5f9',
+            borderRadius:'99px'
+          }}
+        >
+          {a.category}
+        </span>
+      </div>
+
+      <div style={{ flex:1, textAlign:'center' }}>
+        <span
+          style={{
+            fontSize:'12px',
+            fontWeight:'700',
+            padding:'3px 10px',
+            borderRadius:'99px',
+            color:scoreColor,
+            background:scoreBg
+          }}
+        >
+          {a.totalScore}%
+        </span>
+      </div>
+
+      <div
+        className="db-col-date"
+        style={{
+          flex:1,
+          textAlign:'right',
+          fontSize:'11px',
+          color:'#94a3b8'
+        }}
+      >
+        {new Date(a.createdAt).toLocaleDateString(
+          'en-IN',
+          {
+            day:'numeric',
+            month:'short',
+            year:'numeric'
+          }
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+// ── ATTEMPT ROW FULL ─────────────────────────────────────────
+function AttemptRowFull({ a, i, navigate }) {
+  const [hovered, setHovered] = useState(false);
+
+  const scoreColor =
+    a.totalScore >= 70 ? '#16a34a'
+    : a.totalScore >= 50 ? '#d97706'
+    : '#dc2626';
+
+  const scoreBg =
+    a.totalScore >= 70 ? '#dcfce7'
+    : a.totalScore >= 50 ? '#fef9c3'
+    : '#fee2e2';
+
+  const gradeColor =
+    a.grade === 'A' ? '#16a34a'
+    : a.grade === 'B' ? '#2563eb'
+    : a.grade === 'C' ? '#d97706'
+    : '#dc2626';
+
+  return (
+    <div
+      className="db-attempt-row"
+      style={{
+        background: hovered ? '#f0f9ff' : i % 2 === 0 ? '#fff' : '#fafafa',
+        borderLeft: hovered ? '3px solid #3b82f6' : '3px solid transparent'
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() =>
+        navigate(`/results/${a._id}`, {
+          state: { attempt: a }
+        })
+      }
+    >
+      <div className="db-col-main">
+        <div
+          style={{
+            width:'30px',
+            height:'30px',
+            borderRadius:'8px',
+            background:'linear-gradient(135deg,#3b82f6,#8b5cf6)',
+            color:'#fff',
+            display:'flex',
+            alignItems:'center',
+            justifyContent:'center',
+            fontWeight:'700'
+          }}
+        >
+          {a.company?.charAt(0)}
+        </div>
+
+        <div>
+          <div style={{fontWeight:'600'}}>
+            {a.role}
+          </div>
+          <div style={{fontSize:'11px', color:'#64748b'}}>
+            {a.company}
+          </div>
+        </div>
+      </div>
+
+      <div style={{flex:1,textAlign:'center'}}>
+        {a.category}
+      </div>
+
+      <div style={{flex:1,textAlign:'center'}}>
+        {a.totalScore}%
+      </div>
+
+      <div style={{flex:1,textAlign:'center'}}>
+        {a.grade || 'N/A'}
+      </div>
+    </div>
+  );
+}
+
+
+// ── EMPTY STATE ─────────────────────────────────────────
+function EmptyState({ icon, title, sub, btn, onBtn }) {
+  return (
+    <div
+      style={{
+        textAlign:'center',
+        padding:'44px 20px',
+        background:'#fff',
+        borderRadius:'14px',
+        border:'1px solid #f1f5f9',
+        marginBottom:'20px'
+      }}
+    >
+      <div style={{fontSize:'38px', marginBottom:'12px'}}>
+        {icon}
+      </div>
+
+      <div
+        style={{
+          fontSize:'15px',
+          fontWeight:'700',
+          color:'#334155',
+          marginBottom:'6px'
+        }}
+      >
+        {title}
+      </div>
+
+      {sub && (
+        <div
+          style={{
+            fontSize:'12px',
+            color:'#94a3b8',
+            marginBottom:'16px'
+          }}
+        >
+          {sub}
+        </div>
+      )}
+
+      {btn && (
+        <button
+          onClick={onBtn}
+          style={{
+            padding:'10px 22px',
+            background:'#3b82f6',
+            color:'#fff',
+            border:'none',
+            borderRadius:'10px',
+            cursor:'pointer'
+          }}
+        >
+          {btn}
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -632,200 +905,5 @@ export default function DashboardPage() {
       </div>
     </>
   );
-}// ── ATTEMPT ROW COMPONENT ─────────────────────────────────────────
-function AttemptRow({ a, i, navigate }) {
-  const [hovered, setHovered] = useState(false);
-
-  const scoreColor =
-    a.totalScore >= 70
-      ? '#16a34a'
-      : a.totalScore >= 50
-      ? '#d97706'
-      : '#dc2626';
-
-  const scoreBg =
-    a.totalScore >= 70
-      ? '#dcfce7'
-      : a.totalScore >= 50
-      ? '#fef9c3'
-      : '#fee2e2';
-
-  return (
-    <div
-      className="db-attempt-row"
-      style={{
-        background: hovered
-          ? '#f0f9ff'
-          : i % 2 === 0
-          ? '#fff'
-          : '#fafafa',
-        borderLeft: hovered
-          ? '3px solid #3b82f6'
-          : '3px solid transparent'
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() =>
-        navigate(`/results/${a._id}`, {
-          state: { attempt: a }
-        })
-      }
-    >
-      <div className="db-col-main">
-        <div
-          style={{
-            width:'30px',
-            height:'30px',
-            borderRadius:'8px',
-            background:'linear-gradient(135deg,#3b82f6,#8b5cf6)',
-            color:'#fff',
-            display:'flex',
-            alignItems:'center',
-            justifyContent:'center',
-            fontWeight:'700',
-            fontSize:'12px',
-            flexShrink:0
-          }}
-        >
-          {a.company?.charAt(0)}
-        </div>
-
-        <div style={{ minWidth:0 }}>
-          <div
-            style={{
-              fontSize:'13px',
-              fontWeight:'600',
-              color:'#0f172a'
-            }}
-          >
-            {a.role}
-          </div>
-
-          <div
-            style={{
-              fontSize:'11px',
-              color:'#64748b'
-            }}
-          >
-            {a.company}
-          </div>
-        </div>
-      </div>
-
-      <div
-        className="db-col-cat"
-        style={{
-          flex:1,
-          textAlign:'center'
-        }}
-      >
-        <span
-          style={{
-            fontSize:'10px',
-            padding:'2px 8px',
-            background:'#f1f5f9',
-            borderRadius:'99px'
-          }}
-        >
-          {a.category}
-        </span>
-      </div>
-
-      <div style={{ flex:1, textAlign:'center' }}>
-        <span
-          style={{
-            fontSize:'12px',
-            fontWeight:'700',
-            padding:'3px 10px',
-            borderRadius:'99px',
-            color:scoreColor,
-            background:scoreBg
-          }}
-        >
-          {a.totalScore}%
-        </span>
-      </div>
-
-      <div
-        className="db-col-date"
-        style={{
-          flex:1,
-          textAlign:'right',
-          fontSize:'11px',
-          color:'#94a3b8'
-        }}
-      >
-        {new Date(a.createdAt).toLocaleDateString(
-          'en-IN',
-          {
-            day:'numeric',
-            month:'short',
-            year:'numeric'
-          }
-        )}
-      </div>
-    </div>
-  );
-}
-// ── ATTEMPT ROW COMPONENT ─────────────────────────────────────────
-function AttemptRowFull({ a, i, navigate }) {
-  const [hovered, setHovered] = useState(false);
-  const scoreColor = a.totalScore >= 70 ? '#16a34a' : a.totalScore >= 50 ? '#d97706' : '#dc2626';
-  const scoreBg    = a.totalScore >= 70 ? '#dcfce7' : a.totalScore >= 50 ? '#fef9c3' : '#fee2e2';
-  const gradeColor = a.grade === 'A' ? '#16a34a' : a.grade === 'B' ? '#2563eb' : a.grade === 'C' ? '#d97706' : '#dc2626';
-
-  return (
-    <div
-      className="db-attempt-row"
-      style={{ background: hovered ? '#f0f9ff' : i % 2 === 0 ? '#fff' : '#fafafa', borderLeft: hovered ? '3px solid #3b82f6' : '3px solid transparent' }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => navigate(`/results/${a._id}`, { state: { attempt: a } })}
-    >
-      <div className="db-col-main">
-        <div style={{ width:'30px', height:'30px', borderRadius:'8px', background:'linear-gradient(135deg,#3b82f6,#8b5cf6)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'12px', flexShrink:0 }}>
-          {a.company?.charAt(0)}
-        </div>
-        <div style={{ minWidth:0 }}>
-          <div style={{ fontSize:'13px', fontWeight:'600', color:'#0f172a', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.role}</div>
-          <div style={{ fontSize:'11px', color:'#64748b', marginTop:'1px' }}>{a.company}</div>
-        </div>
-      </div>
-      <div className="db-col-cat" style={{ flex:1, textAlign:'center' }}>
-        <span style={{ fontSize:'10px', padding:'2px 8px', background:'#f1f5f9', color:'#475569', borderRadius:'99px', fontWeight:'500' }}>{a.category}</span>
-      </div>
-      <div style={{ flex:1, textAlign:'center' }}>
-        <span style={{ fontSize:'12px', fontWeight:'700', padding:'3px 10px', borderRadius:'99px', color: scoreColor, background: scoreBg }}>
-          {a.totalScore}%
-        </span>
-      </div>
-      <div style={{ flex:1, textAlign:'center' }}>
-        <span style={{ fontSize:'12px', fontWeight:'700', padding:'3px 10px', borderRadius:'99px', color: gradeColor, background: scoreBg }}>
-          {a.grade || 'N/A'}
-        </span>
-      </div>
-      <div className="db-col-date" style={{ flex:1, textAlign:'right', fontSize:'11px', color:'#94a3b8' }}>
-        {new Date(a.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}
-      </div>
-    </div>
-  );
 }
 
-// ── EMPTY STATE COMPONENT ─────────────────────────────────────────
-function EmptyState({ icon, title, sub, btn, onBtn }) {
-  return (
-    <div style={{ textAlign:'center', padding:'44px 20px', background:'#fff', borderRadius:'14px', border:'1px solid #f1f5f9', marginBottom:'20px' }}>
-      <div style={{ fontSize:'38px', marginBottom:'12px' }}>{icon}</div>
-      <div style={{ fontSize:'15px', fontWeight:'700', color:'#334155', marginBottom:'6px' }}>{title}</div>
-      {sub && <div style={{ fontSize:'12px', color:'#94a3b8', marginBottom:'16px' }}>{sub}</div>}
-      {btn && onBtn && (
-        <button
-          style={{ padding:'10px 22px', background:'#3b82f6', color:'#fff', border:'none', borderRadius:'10px', fontSize:'13px', fontWeight:'600', cursor:'pointer' }}
-          onClick={onBtn}
-        >
-          {btn}
-        </button>
-      )}
-    </div>
-  );
-}
