@@ -632,8 +632,141 @@ export default function DashboardPage() {
       </div>
     </>
   );
-}
+}// ── ATTEMPT ROW COMPONENT ─────────────────────────────────────────
+function AttemptRow({ a, i, navigate }) {
+  const [hovered, setHovered] = useState(false);
 
+  const scoreColor =
+    a.totalScore >= 70
+      ? '#16a34a'
+      : a.totalScore >= 50
+      ? '#d97706'
+      : '#dc2626';
+
+  const scoreBg =
+    a.totalScore >= 70
+      ? '#dcfce7'
+      : a.totalScore >= 50
+      ? '#fef9c3'
+      : '#fee2e2';
+
+  return (
+    <div
+      className="db-attempt-row"
+      style={{
+        background: hovered
+          ? '#f0f9ff'
+          : i % 2 === 0
+          ? '#fff'
+          : '#fafafa',
+        borderLeft: hovered
+          ? '3px solid #3b82f6'
+          : '3px solid transparent'
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() =>
+        navigate(`/results/${a._id}`, {
+          state: { attempt: a }
+        })
+      }
+    >
+      <div className="db-col-main">
+        <div
+          style={{
+            width:'30px',
+            height:'30px',
+            borderRadius:'8px',
+            background:'linear-gradient(135deg,#3b82f6,#8b5cf6)',
+            color:'#fff',
+            display:'flex',
+            alignItems:'center',
+            justifyContent:'center',
+            fontWeight:'700',
+            fontSize:'12px',
+            flexShrink:0
+          }}
+        >
+          {a.company?.charAt(0)}
+        </div>
+
+        <div style={{ minWidth:0 }}>
+          <div
+            style={{
+              fontSize:'13px',
+              fontWeight:'600',
+              color:'#0f172a'
+            }}
+          >
+            {a.role}
+          </div>
+
+          <div
+            style={{
+              fontSize:'11px',
+              color:'#64748b'
+            }}
+          >
+            {a.company}
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="db-col-cat"
+        style={{
+          flex:1,
+          textAlign:'center'
+        }}
+      >
+        <span
+          style={{
+            fontSize:'10px',
+            padding:'2px 8px',
+            background:'#f1f5f9',
+            borderRadius:'99px'
+          }}
+        >
+          {a.category}
+        </span>
+      </div>
+
+      <div style={{ flex:1, textAlign:'center' }}>
+        <span
+          style={{
+            fontSize:'12px',
+            fontWeight:'700',
+            padding:'3px 10px',
+            borderRadius:'99px',
+            color:scoreColor,
+            background:scoreBg
+          }}
+        >
+          {a.totalScore}%
+        </span>
+      </div>
+
+      <div
+        className="db-col-date"
+        style={{
+          flex:1,
+          textAlign:'right',
+          fontSize:'11px',
+          color:'#94a3b8'
+        }}
+      >
+        {new Date(a.createdAt).toLocaleDateString(
+          'en-IN',
+          {
+            day:'numeric',
+            month:'short',
+            year:'numeric'
+          }
+        )}
+      </div>
+    </div>
+  );
+}
 // ── ATTEMPT ROW COMPONENT ─────────────────────────────────────────
 function AttemptRowFull({ a, i, navigate }) {
   const [hovered, setHovered] = useState(false);
