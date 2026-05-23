@@ -4,21 +4,17 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { getAttempts } from '../services/api';
 
-// ── CSS ────────────────────────────────────────────────────────────
 const globalCSS = `
   * { box-sizing: border-box; }
   body { overflow-x: hidden; margin: 0; }
-
   .db-root { display: flex; min-height: 100vh; background: #f0f2f5;
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; }
-
   .db-sidebar {
     position: fixed; top: 0; left: 0; height: 100vh; z-index: 300;
     background: #0f172a; display: flex; flex-direction: column;
     transition: transform 0.32s cubic-bezier(.4,0,.2,1), width 0.32s cubic-bezier(.4,0,.2,1);
     overflow: hidden; flex-shrink: 0;
   }
-
   @media (min-width: 769px) {
     .db-sidebar { position: fixed; transform: translateX(0) !important; }
     .db-sidebar.icon-only { width: 64px; }
@@ -27,30 +23,24 @@ const globalCSS = `
     .db-main.sidebar-icon { margin-left: 64px; }
     .db-main.sidebar-full { margin-left: 220px; }
   }
-
   @media (max-width: 768px) {
     .db-sidebar { width: 240px !important; transform: translateX(-100%); }
     .db-sidebar.mobile-open { transform: translateX(0) !important; }
     .db-main { margin-left: 0 !important; }
     .db-overlay { display: block !important; }
   }
-
   .db-overlay {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-    z-index: 299; backdrop-filter: blur(2px);
-    animation: fadeIn 0.2s ease;
+    z-index: 299; backdrop-filter: blur(2px); animation: fadeIn 0.2s ease;
   }
   @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
-
   .db-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
   @media (max-width: 1024px) { .db-stats { grid-template-columns: repeat(2,1fr); } }
   @media (max-width: 480px)  { .db-stats { grid-template-columns: repeat(2,1fr); gap: 10px; } }
-
   .db-cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 28px; }
   @media (max-width: 1200px) { .db-cards { grid-template-columns: repeat(3,1fr); } }
   @media (max-width: 900px)  { .db-cards { grid-template-columns: repeat(2,1fr); } }
   @media (max-width: 500px)  { .db-cards { grid-template-columns: 1fr; } }
-
   .db-attempt-row { display: flex; align-items: center; padding: 12px 16px;
     border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.15s; }
   .db-attempt-row:hover { background: #f0f9ff; }
@@ -64,24 +54,18 @@ const globalCSS = `
     .db-col-date { display: none; }
     .db-col-score { flex: 0 0 60px; }
   }
-
   .db-card { transition: transform 0.18s ease, box-shadow 0.18s ease; cursor: pointer; }
   .db-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.12) !important; }
-
   .db-nav-item { display: flex; align-items: center; gap: 12px;
     padding: 11px 16px; color: #94a3b8; cursor: pointer;
-    transition: background 0.15s, color 0.15s; border-left: 3px solid transparent;
-    white-space: nowrap; }
+    transition: background 0.15s, color 0.15s; border-left: 3px solid transparent; white-space: nowrap; }
   .db-nav-item:hover { background: #1e293b; color: #e2e8f0; }
   .db-nav-item.active { background: #1e3a5f; color: #fff; border-left-color: #3b82f6; }
-
   .db-main { flex: 1; min-width: 0; padding: 0; overflow-x: hidden; }
-
   .db-topbar { display: flex; align-items: center; justify-content: space-between;
     padding: 14px 24px; background: #fff; border-bottom: 1px solid #e8eaed;
     position: sticky; top: 0; z-index: 100; gap: 12px; }
   @media (max-width: 600px) { .db-topbar { padding: 12px 14px; } }
-
   .db-search { display: flex; align-items: center; gap: 8px;
     background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px;
     padding: 8px 14px; flex: 1; max-width: 280px; transition: border-color 0.2s; }
@@ -89,20 +73,15 @@ const globalCSS = `
   .db-search input { border: none; background: transparent; outline: none;
     font-size: 13px; color: #334155; width: 100%; }
   @media (max-width: 500px) { .db-search { max-width: 160px; } }
-
   .db-content { padding: 22px 24px; }
   @media (max-width: 600px) { .db-content { padding: 14px; } }
-
   .db-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
-
   .db-section-header { display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
-
   .db-main::-webkit-scrollbar { width: 4px; }
   .db-main::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
 `;
 
-// ── CONSTANTS ─────────────────────────────────────────────────────
 const INTERVIEWS = [
   { id:'1', company:'TCS',         role:'Software Engineer',  category:'Full Stack', icon:'💻', color:'#3b82f6', bg:'#eff6ff', border:'#bfdbfe' },
   { id:'2', company:'Wipro',       role:'Full Stack (MERN)',   category:'Full Stack', icon:'⚛️', color:'#8b5cf6', bg:'#f5f3ff', border:'#ddd6fe' },
@@ -123,7 +102,6 @@ const NAV_ITEMS = [
   { icon: '⚙️', label: 'Settings'    },
 ];
 
-// ── HELPER: score colors ──────────────────────────────────────────
 function scoreColor(score) {
   return score >= 70 ? '#16a34a' : score >= 50 ? '#d97706' : '#dc2626';
 }
@@ -131,10 +109,55 @@ function scoreBg(score) {
   return score >= 70 ? '#dcfce7' : score >= 50 ? '#fef9c3' : '#fee2e2';
 }
 
-// ── ATTEMPT ROW FULL (My Attempts view) ──────────────────────────
+function AttemptRow({ a, i, navigate }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      className="db-attempt-row"
+      style={{
+        background: hovered ? '#f0f9ff' : i % 2 === 0 ? '#fff' : '#fafafa',
+        borderLeft: hovered ? '3px solid #3b82f6' : '3px solid transparent',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => navigate(`/results/${a._id}`, { state: { attempt: a } })}
+    >
+      <div className="db-col-main">
+        <div style={{
+          width: '30px', height: '30px', borderRadius: '8px',
+          background: 'linear-gradient(135deg,#3b82f6,#8b5cf6)',
+          color: '#fff', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', fontWeight: '700', fontSize: '12px', flexShrink: 0,
+        }}>
+          {a.company?.charAt(0)}
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a' }}>{a.role}</div>
+          <div style={{ fontSize: '11px', color: '#64748b' }}>{a.company}</div>
+        </div>
+      </div>
+      <div className="db-col-cat" style={{ flex: 1, textAlign: 'center' }}>
+        <span style={{ fontSize: '10px', padding: '2px 8px', background: '#f1f5f9', borderRadius: '99px' }}>
+          {a.category}
+        </span>
+      </div>
+      <div style={{ flex: 1, textAlign: 'center' }}>
+        <span style={{
+          fontSize: '12px', fontWeight: '700', padding: '3px 10px',
+          borderRadius: '99px', color: scoreColor(a.totalScore), background: scoreBg(a.totalScore),
+        }}>
+          {a.totalScore}%
+        </span>
+      </div>
+      <div className="db-col-date" style={{ flex: 1, textAlign: 'right', fontSize: '11px', color: '#94a3b8' }}>
+        {new Date(a.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+      </div>
+    </div>
+  );
+}
+
 function AttemptRowFull({ a, i, navigate }) {
   const [hovered, setHovered] = useState(false);
-
   return (
     <div
       className="db-attempt-row"
@@ -160,7 +183,6 @@ function AttemptRowFull({ a, i, navigate }) {
           <div style={{ fontSize: '11px', color: '#64748b' }}>{a.company}</div>
         </div>
       </div>
-
       <div style={{ flex: 1, textAlign: 'center' }}>{a.category}</div>
       <div style={{ flex: 1, textAlign: 'center' }}>{a.totalScore}%</div>
       <div style={{ flex: 1, textAlign: 'center' }}>{a.grade || 'N/A'}</div>
@@ -168,7 +190,6 @@ function AttemptRowFull({ a, i, navigate }) {
   );
 }
 
-// ── EMPTY STATE ───────────────────────────────────────────────────
 function EmptyState({ icon, title, sub, btn, onBtn }) {
   return (
     <div style={{
@@ -179,10 +200,7 @@ function EmptyState({ icon, title, sub, btn, onBtn }) {
       <div style={{ fontSize: '15px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>{title}</div>
       {sub && <div style={{ fontSize: '12px', color: '#94a3b8', marginBottom: '16px' }}>{sub}</div>}
       {btn && (
-        <button
-          onClick={onBtn}
-          style={{ padding: '10px 22px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer' }}
-        >
+        <button onClick={onBtn} style={{ padding: '10px 22px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer' }}>
           {btn}
         </button>
       )}
@@ -190,7 +208,6 @@ function EmptyState({ icon, title, sub, btn, onBtn }) {
   );
 }
 
-// ── DASHBOARD PAGE ────────────────────────────────────────────────
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -227,9 +244,7 @@ export default function DashboardPage() {
   }, [isMobile, sideOpen]);
 
   useEffect(() => {
-    if (isMobile) {
-      document.body.style.overflow = sideOpen ? 'hidden' : '';
-    }
+    if (isMobile) document.body.style.overflow = sideOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [sideOpen, isMobile]);
 
@@ -241,12 +256,8 @@ export default function DashboardPage() {
   }, []);
 
   const filtered = filter === 'All' ? INTERVIEWS : INTERVIEWS.filter(iv => iv.category === filter);
-
-  const avgScore  = attempts.length
-    ? Math.round(attempts.reduce((s, a) => s + a.totalScore, 0) / attempts.length) : 0;
-  const bestScore = attempts.length
-    ? Math.max(...attempts.map(a => a.totalScore)) : 0;
-
+  const avgScore  = attempts.length ? Math.round(attempts.reduce((s, a) => s + a.totalScore, 0) / attempts.length) : 0;
+  const bestScore = attempts.length ? Math.max(...attempts.map(a => a.totalScore)) : 0;
   const showAttempts = activeNav === 'My Attempts';
 
   const toggleSide = () => {
@@ -265,25 +276,19 @@ export default function DashboardPage() {
   return (
     <>
       <style>{globalCSS}</style>
-
       <div className="db-root">
 
-        {/* MOBILE OVERLAY */}
         {isMobile && sideOpen && (
           <div className="db-overlay" onClick={() => setSideOpen(false)} />
         )}
 
-        {/* SIDEBAR */}
         <aside ref={sidebarRef} className={sideClass}>
           <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid #1e293b', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontSize: '20px' }}>🎯</span>
             {(sideExpanded || isMobile) && (
-              <span style={{ color: '#fff', fontWeight: '800', fontSize: '15px', whiteSpace: 'nowrap' }}>
-                MockPrep
-              </span>
+              <span style={{ color: '#fff', fontWeight: '800', fontSize: '15px', whiteSpace: 'nowrap' }}>MockPrep</span>
             )}
           </div>
-
           <nav style={{ flex: 1, paddingTop: '8px' }}>
             {NAV_ITEMS.map(({ icon, label }) => (
               <div
@@ -299,7 +304,6 @@ export default function DashboardPage() {
               </div>
             ))}
           </nav>
-
           <div style={{ borderTop: '1px solid #1e293b', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
               width: '34px', height: '34px', borderRadius: '50%',
@@ -325,10 +329,7 @@ export default function DashboardPage() {
           </div>
         </aside>
 
-        {/* MAIN CONTENT */}
         <div className={mainClass} style={{ minHeight: '100vh', overflowX: 'hidden' }}>
-
-          {/* TOPBAR */}
           <div className="db-topbar">
             <button
               onClick={toggleSide}
@@ -339,7 +340,6 @@ export default function DashboardPage() {
               <span style={{ display: 'block', width: '16px', height: '2px', background: '#475569', borderRadius: '2px' }} />
               <span style={{ display: 'block', width: '20px', height: '2px', background: '#475569', borderRadius: '2px' }} />
             </button>
-
             <div style={{ flex: 1, marginLeft: '12px' }}>
               <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', lineHeight: '1.2' }}>
                 {showAttempts ? '📋 My Attempts' : `Hey, ${user?.name?.split(' ')[0]} 👋`}
@@ -348,12 +348,10 @@ export default function DashboardPage() {
                 {showAttempts ? `${attempts.length} sessions` : 'Ready to practice?'}
               </div>
             </div>
-
             <div className="db-search">
               <span style={{ fontSize: '14px' }}>🔍</span>
               <input placeholder="Search roles..." />
             </div>
-
             <div style={{
               width: '34px', height: '34px', borderRadius: '50%',
               background: 'linear-gradient(135deg,#3b82f6,#8b5cf6)',
@@ -364,13 +362,10 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* PAGE CONTENT */}
           <div className="db-content">
 
-            {/* ── DASHBOARD VIEW ── */}
             {activeNav === 'Dashboard' && (
               <>
-                {/* STATS */}
                 <div className="db-stats">
                   {[
                     { label: 'Total attempts', value: attempts.length, icon: '📝', color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' },
@@ -390,7 +385,6 @@ export default function DashboardPage() {
                   ))}
                 </div>
 
-                {/* SECTION HEADER */}
                 <div className="db-section-header">
                   <div>
                     <div style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>Interview Prep</div>
@@ -398,26 +392,20 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* FILTER PILLS */}
                 <div className="db-filters">
                   {CATEGORIES.map(c => (
-                    <button
-                      key={c}
-                      onClick={() => setFilter(c)}
-                      style={{
-                        padding: '6px 16px', borderRadius: '99px', fontSize: '13px', fontWeight: '500',
-                        cursor: 'pointer', border: '1.5px solid', transition: 'all 0.15s',
-                        background:  filter === c ? '#3b82f6' : '#fff',
-                        color:       filter === c ? '#fff'    : '#475569',
-                        borderColor: filter === c ? '#3b82f6' : '#e2e8f0',
-                      }}
-                    >
+                    <button key={c} onClick={() => setFilter(c)} style={{
+                      padding: '6px 16px', borderRadius: '99px', fontSize: '13px', fontWeight: '500',
+                      cursor: 'pointer', border: '1.5px solid', transition: 'all 0.15s',
+                      background:  filter === c ? '#3b82f6' : '#fff',
+                      color:       filter === c ? '#fff'    : '#475569',
+                      borderColor: filter === c ? '#3b82f6' : '#e2e8f0',
+                    }}>
                       {c}
                     </button>
                   ))}
                 </div>
 
-                {/* INTERVIEW CARDS */}
                 <div className="db-cards">
                   {filtered.map(iv => (
                     <div
@@ -457,7 +445,6 @@ export default function DashboardPage() {
                   ))}
                 </div>
 
-                {/* RECENT ATTEMPTS */}
                 <div className="db-section-header">
                   <div>
                     <div style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>Recent Attempts</div>
@@ -485,48 +472,14 @@ export default function DashboardPage() {
                       <span style={{ flex: 1, textAlign: 'center' }}>Score</span>
                       <span className="db-col-date" style={{ flex: 1, textAlign: 'right' }}>Date</span>
                     </div>
-                    {attempts.slice(0,3).map((a,i)=>(
-  <div
-    key={a._id}
-    className="db-attempt-row"
-    onClick={() =>
-      navigate(`/results/${a._id}`, {
-        state:{attempt:a}
-      })
-    }
-  >
-    <div className="db-col-main">
-      <div>
-        <div style={{fontWeight:'600'}}>
-          {a.role}
-        </div>
-        <div style={{fontSize:'12px',color:'#64748b'}}>
-          {a.company}
-        </div>
-      </div>
-    </div>
-
-    <div style={{flex:1,textAlign:'center'}}>
-      <span
-        style={{
-          color: scoreColor(a.totalScore),
-          background: scoreBg(a.totalScore),
-          padding:'4px 10px',
-          borderRadius:'99px',
-          fontWeight:'700'
-        }}
-      >
-        {a.totalScore}%
-      </span>
-    </div>
-  </div>
-))}
+                    {attempts.slice(0, 3).map((a, i) => (
+                      <AttemptRow key={a._id} a={a} i={i} navigate={navigate} />
+                    ))}
                   </div>
                 )}
               </>
             )}
 
-            {/* ── MY ATTEMPTS VIEW ── */}
             {activeNav === 'My Attempts' && (
               <>
                 <div className="db-section-header">
@@ -540,7 +493,6 @@ export default function DashboardPage() {
                     </span>
                   )}
                 </div>
-
                 {loading ? (
                   <EmptyState icon="⏳" title="Loading..." sub="" />
                 ) : attempts.length === 0 ? (
@@ -563,7 +515,6 @@ export default function DashboardPage() {
               </>
             )}
 
-            {/* ── ANALYTICS VIEW ── */}
             {activeNav === 'Analytics' && (
               <>
                 <div className="db-section-header">
@@ -572,7 +523,6 @@ export default function DashboardPage() {
                     <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Your interview performance overview</div>
                   </div>
                 </div>
-
                 <div className="db-stats" style={{ marginBottom: '20px' }}>
                   {[
                     { label: 'Total attempts', value: attempts.length, icon: '📝', color: '#3b82f6', bg: '#eff6ff' },
@@ -580,9 +530,7 @@ export default function DashboardPage() {
                     { label: 'Best score',     value: `${bestScore}%`, icon: '🏆', color: '#f59e0b', bg: '#fffbeb' },
                     {
                       label: 'Pass rate',
-                      value: attempts.length
-                        ? `${Math.round((attempts.filter(a => a.totalScore >= 60).length / attempts.length) * 100)}%`
-                        : '0%',
+                      value: attempts.length ? `${Math.round((attempts.filter(a => a.totalScore >= 60).length / attempts.length) * 100)}%` : '0%',
                       icon: '✅', color: '#8b5cf6', bg: '#f5f3ff',
                     },
                   ].map(({ label, value, icon, color, bg }) => (
@@ -597,7 +545,6 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
-
                 {attempts.length > 0 && (
                   <div style={{ background: '#fff', borderRadius: '14px', padding: '20px', border: '1px solid #f1f5f9', marginBottom: '16px' }}>
                     <div style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', marginBottom: '16px' }}>Score by Category</div>
@@ -623,7 +570,6 @@ export default function DashboardPage() {
                     })}
                   </div>
                 )}
-
                 {attempts.length > 0 && (
                   <div style={{ background: '#fff', borderRadius: '14px', padding: '20px', border: '1px solid #f1f5f9', marginBottom: '16px' }}>
                     <div style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', marginBottom: '16px' }}>Grade Distribution</div>
@@ -643,7 +589,6 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
-
                 {attempts.length === 0 && (
                   <EmptyState icon="📊" title="No data yet" sub="Complete interviews to see your analytics here"
                     btn="Start Practicing →" onBtn={() => setActiveNav('Dashboard')} />
@@ -651,7 +596,6 @@ export default function DashboardPage() {
               </>
             )}
 
-            {/* ── SETTINGS VIEW ── */}
             {activeNav === 'Settings' && (
               <>
                 <div className="db-section-header">
@@ -660,7 +604,6 @@ export default function DashboardPage() {
                     <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Manage your account</div>
                   </div>
                 </div>
-
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ background: '#fff', borderRadius: '14px', padding: '20px', border: '1px solid #f1f5f9' }}>
                     <div style={{ fontSize: '13px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '14px' }}>Profile</div>
@@ -674,7 +617,6 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
-
                   <div style={{ background: '#fff', borderRadius: '14px', padding: '20px', border: '1px solid #f1f5f9' }}>
                     <div style={{ fontSize: '13px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '14px' }}>Your Progress</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -691,7 +633,6 @@ export default function DashboardPage() {
                       ))}
                     </div>
                   </div>
-
                   <div style={{ background: '#fff', borderRadius: '14px', padding: '20px', border: '1px solid #f1f5f9' }}>
                     <div style={{ fontSize: '13px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '14px' }}>Account</div>
                     <button
