@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Brain, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { loginUser } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -7,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 export default function LoginPage() {
   const [form, setForm]       = useState({ email:'', password:'' });
   const [loading, setLoading] = useState(false);
-  const [focused, setFocused] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
   const { login } = useAuth();
   const navigate  = useNavigate();
 
@@ -26,132 +28,135 @@ export default function LoginPage() {
     }
   };
 
-  const inputStyle = (name) => ({
-    width:'100%', padding:'12px 16px', borderRadius:'10px',
-    border: focused === name ? '2px solid #3b82f6' : '2px solid #e2e8f0',
-    fontSize:'14px', boxSizing:'border-box', outline:'none',
-    background: focused === name ? '#fff' : '#f8fafc',
-    transition:'all 0.2s', color:'#0f172a',
-  });
-
   return (
-    <div style={s.page}>
-      {/* Left panel */}
-      <div style={s.left}>
-        <div style={s.leftInner}>
-          <div style={s.brand}>🎯 MockPrep</div>
-          <h2 style={s.leftTitle}>Welcome back,<br/>keep practicing!</h2>
-          <p style={s.leftSub}>
-            Your next big interview is closer than you think. Login and continue your preparation.
+    <div className="min-h-screen bg-surface-950 text-white flex">
+
+      {/* Left — branding */}
+      <div className="hidden lg:flex flex-col justify-between w-[45%] bg-gradient-to-br from-surface-900 to-surface-950 border-r border-white/5 p-12 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-cyan-500/8 rounded-full blur-3xl" />
+          <div className="absolute inset-0 bg-hero-pattern opacity-30" />
+        </div>
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
+            <Brain className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-xl font-bold">MockPrep</span>
+        </div>
+        <div className="relative z-10">
+          <h2 className="text-4xl font-black leading-tight mb-4">
+            Welcome back.<br />
+            <span className="gradient-text">Keep practicing.</span>
+          </h2>
+          <p className="text-white/40 text-lg mb-8">
+            Your next opportunity is closer than you think.
           </p>
-          <div style={s.statsGrid}>
+          <div className="grid grid-cols-2 gap-4">
             {[
-              ['8+',   'Companies'],
-              ['6',    'Role types'],
-              ['100%', 'Free to use'],
-              ['AI',   'Powered'],
-            ].map(([val, label]) => (
-              <div key={label} style={s.statBox}>
-                <div style={s.statVal}>{val}</div>
-                <div style={s.statLabel}>{label}</div>
+              { val:'8+',   label:'Companies'     },
+              { val:'AI',   label:'Evaluation'    },
+              { val:'Free', label:'Forever'       },
+              { val:'📱',   label:'Mobile Ready'  },
+            ].map(({ val, label }) => (
+              <div key={label} className="glass rounded-xl p-4 text-center">
+                <div className="text-2xl font-black text-blue-400">{val}</div>
+                <div className="text-xs text-white/30 mt-1">{label}</div>
               </div>
             ))}
           </div>
         </div>
+        <div className="relative z-10 text-xs text-white/20">
+          © {new Date().getFullYear()} MockPrep by Dheeraj Kumar
+        </div>
       </div>
 
-      {/* Right panel */}
-      <div style={s.right}>
-        <div style={s.card}>
-          <div style={s.cardTop}>
-            <h1 style={s.title}>Sign in to MockPrep</h1>
-            <p style={s.subtitle}>Continue your interview preparation</p>
+      {/* Right — form */}
+      <div className="flex-1 flex flex-col items-center justify-center p-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm"
+        >
+          {/* Mobile brand */}
+          <div className="flex items-center gap-2 mb-8 lg:hidden">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <Brain className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-lg font-bold">MockPrep</span>
           </div>
 
-          <form onSubmit={handleSubmit} style={s.form}>
-            <div style={s.field}>
-              <label style={s.label}>Email address</label>
-              <input
-                style={inputStyle('email')}
-                type="email"
-                placeholder="you@example.com"
-                value={form.email}
-                onChange={e => setForm({...form, email: e.target.value})}
-                onFocus={() => setFocused('email')}
-                onBlur={() => setFocused('')}
-                required
-              />
-            </div>
-            <div style={s.field}>
-              <label style={s.label}>Password</label>
-              <input
-                style={inputStyle('password')}
-                type="password"
-                placeholder="Your password"
-                value={form.password}
-                onChange={e => setForm({...form, password: e.target.value})}
-                onFocus={() => setFocused('password')}
-                onBlur={() => setFocused('')}
-                required
-              />
+          <div className="mb-8">
+            <h1 className="text-2xl font-black mb-1">Sign in</h1>
+            <p className="text-sm text-white/40">Continue your interview preparation</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-xs font-medium text-white/50 block mb-1.5">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                <input
+                  className="input-field pl-10"
+                  type="email" placeholder="you@example.com"
+                  value={form.email}
+                  onChange={e => setForm({...form, email: e.target.value})}
+                  required
+                />
+              </div>
             </div>
 
-            <button
-              style={{ ...s.btn, opacity: loading ? 0.7 : 1 }}
+            <div>
+              <label className="text-xs font-medium text-white/50 block mb-1.5">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                <input
+                  className="input-field pl-10 pr-10"
+                  type={showPwd ? 'text' : 'password'} placeholder="Your password"
+                  value={form.password}
+                  onChange={e => setForm({...form, password: e.target.value})}
+                  required
+                />
+                <button type="button" onClick={() => setShowPwd(s => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50 transition-colors">
+                  {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              type="submit"
               disabled={loading}
-              onMouseEnter={e => e.target.style.background='#1d4ed8'}
-              onMouseLeave={e => e.target.style.background='#3b82f6'}
+              className="btn-primary w-full justify-center py-3 mt-2"
             >
-              {loading ? 'Signing in...' : 'Sign In →'}
-            </button>
+              {loading ? (
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+              ) : <>Sign In <ArrowRight className="w-4 h-4" /></>}
+            </motion.button>
           </form>
 
-          <p style={s.switchText}>
-            No account yet?{' '}
-            <Link to="/register" style={s.link}>Create one free</Link>
+          <p className="text-center text-sm text-white/30 mt-6">
+            No account?{' '}
+            <Link to="/register" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+              Create one free
+            </Link>
           </p>
 
-          <div style={s.divider}><span style={s.dividerText}>Mock interviews for top Indian IT companies</span></div>
-          <div style={s.companies}>
-            {['TCS','Wipro','Deloitte','Infosys','HCL','Accenture'].map(c => (
-              <span key={c} style={s.companyChip}>{c}</span>
-            ))}
+          <div className="mt-8 pt-6 border-t border-white/5">
+            <p className="text-center text-xs text-white/20 mb-3">Trusted for</p>
+            <div className="flex justify-center gap-2 flex-wrap">
+              {['TCS','Wipro','Infosys','Deloitte'].map(co => (
+                <span key={co} className="glass px-3 py-1 rounded-md text-xs text-white/30">{co}</span>
+              ))}
+            </div>
           </div>
-        </div>
-
-        <footer style={s.footer}>
-          © {new Date().getFullYear()} MockPrep · All rights reserved to <strong>Dheeraj Kumar</strong>
-        </footer>
+        </motion.div>
       </div>
     </div>
   );
 }
-
-const s = {
-  page:      { display:'flex', flexDirection:'column', minHeight:'100vh', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
-  left:      { display:'none' },  // hide left panel on mobile
-  leftInner: { maxWidth:'360px' },
-  brand:     { fontSize:'22px', fontWeight:'800', color:'#fff', marginBottom:'40px' },
-  leftTitle: { fontSize:'32px', fontWeight:'800', color:'#fff', lineHeight:'1.3', margin:'0 0 16px' },
-  leftSub:   { fontSize:'15px', color:'#bfdbfe', lineHeight:'1.7', margin:'0 0 32px' },
-  statsGrid: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' },
-  statBox:   { background:'rgba(255,255,255,0.12)', borderRadius:'12px', padding:'16px', textAlign:'center' },
-  statVal:   { fontSize:'24px', fontWeight:'800', color:'#fff', marginBottom:'4px' },
-  statLabel: { fontSize:'12px', color:'#bfdbfe' },
-  right:     { flex:1, background:'#f8fafc', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px 16px' },
-  card:      { background:'#fff', borderRadius:'16px', padding:'28px 20px', width:'100%', maxWidth:'420px', boxShadow:'0 4px 24px rgba(0,0,0,0.08)' },
-  cardTop:   { marginBottom:'28px' },
-  title:     { fontSize:'24px', fontWeight:'800', color:'#0f172a', margin:'0 0 6px' },
-  subtitle:  { fontSize:'14px', color:'#64748b', margin:0 },
-  form:      { display:'flex', flexDirection:'column', gap:'16px' },
-  field:     { display:'flex', flexDirection:'column', gap:'6px' },
-  label:     { fontSize:'13px', fontWeight:'600', color:'#374151' },
-  btn:       { padding:'13px', background:'#3b82f6', color:'#fff', border:'none', borderRadius:'10px', fontSize:'15px', fontWeight:'700', cursor:'pointer', transition:'background 0.2s', marginTop:'4px' },
-  switchText:{ textAlign:'center', fontSize:'13px', color:'#64748b', marginTop:'20px' },
-  link:      { color:'#3b82f6', fontWeight:'600', textDecoration:'none' },
-  divider:   { textAlign:'center', borderTop:'1px solid #f1f5f9', paddingTop:'16px', marginTop:'20px' },
-  dividerText:{ fontSize:'11px', color:'#94a3b8' },
-  companies: { display:'flex', flexWrap:'wrap', gap:'6px', justifyContent:'center', marginTop:'10px' },
-  companyChip:{ padding:'3px 10px', background:'#f1f5f9', color:'#475569', borderRadius:'99px', fontSize:'11px', fontWeight:'500' },
-  footer:    { marginTop:'20px', fontSize:'12px', color:'#94a3b8', textAlign:'center' },
-};
