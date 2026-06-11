@@ -684,10 +684,24 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
-  LayoutDashboard, ClipboardList, BarChart3, Settings,
-  LogOut, Brain, Search, ChevronRight, TrendingUp,
-  Zap, Target, Award, Clock, Play, X, Menu,
-  Sparkles, ArrowUpRight, BookOpen, Code2
+  LayoutDashboard,
+  ClipboardList,
+  BarChart3,
+  Settings,
+  LogOut,
+  Brain,
+  Search,
+  ChevronRight,
+  TrendingUp,
+  Zap,
+  Target,
+  Award,
+  Play,
+  X,
+  Menu,
+  Sparkles,
+  ArrowUpRight,
+  BookOpen
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getAttempts } from '../services/api';
