@@ -1,303 +1,322 @@
+// 
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Brain, ArrowLeft, ChevronDown, CheckCircle,
+         AlertTriangle, Lightbulb, RotateCcw, TrendingUp } from 'lucide-react';
+import { ScoreRing } from '../components/ui/ScoreRing';
 
-const mobileCSS = `
-  .rp-page { max-width: 820px; margin: 0 auto; }
-  .rp-hero { display: flex; flex-direction: column; gap: 16px; margin: 0 12px 16px; padding: 18px; }
-  .rp-hero-right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-  .rp-swgrid { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 0 12px 16px; }
-  .rp-improve-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-  .rp-section { margin: 0 12px 16px; }
-  .rp-answer-card { margin: 0 12px 10px; padding: 14px; }
-  .rp-feedback-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 10px; }
-  .rp-actions { margin: 20px 12px 12px; flex-wrap: wrap; }
-  .rp-score-big { font-size: 40px; padding: 10px 20px; }
-  @media (min-width: 600px) {
-    .rp-hero { flex-direction: row; justify-content: space-between; align-items: flex-start; margin: 0 24px 20px; padding: 28px 32px; }
-    .rp-hero-right { flex-direction: column; text-align: center; align-items: center; }
-    .rp-swgrid { grid-template-columns: 1fr 1fr; margin: 0 24px 20px; }
-    .rp-improve-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-    .rp-section { margin: 0 24px 20px; }
-    .rp-answer-card { margin: 0 0 12px 0; padding: 20px 24px; }
-    .rp-feedback-grid { grid-template-columns: 1fr 1fr; }
-    .rp-actions { margin: 32px 24px 16px; flex-wrap: nowrap; }
-    .rp-score-big { font-size: 52px; padding: 14px 32px; }
-  }
-`;
+const fadeUp = {
+  hidden: { opacity:0, y:16 },
+  show:   { opacity:1, y:0, transition:{ duration:0.5, ease:'easeOut' } },
+};
+const stagger = { show: { transition: { staggerChildren:0.08 } } };
 
 export default function ResultsPage() {
   const { state }  = useLocation();
   const navigate   = useNavigate();
   const attempt    = state?.attempt;
+  const [expanded, setExpanded] = useState(null);
 
   if (!attempt) return (
-    <div style={s.center}>
-      <style>{mobileCSS}</style>
-      <div style={s.emptyIcon}>📋</div>
-      <p style={s.emptyText}>No results found.</p>
-      <button style={s.btn} onClick={() => navigate('/dashboard')}>
-        Back to Dashboard
-      </button>
+    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
+      <div className="glass-card rounded-2xl p-10 text-center max-w-sm">
+        <div className="text-4xl mb-4">📋</div>
+        <div className="font-semibold text-white mb-4">No results found</div>
+        <button className="btn-primary mx-auto" onClick={() => navigate('/dashboard')}>
+          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+        </button>
+      </div>
     </div>
   );
 
-  const scoreColor  = attempt.totalScore >= 70 ? '#16a34a' : attempt.totalScore >= 50 ? '#d97706' : '#dc2626';
-  const scoreBg     = attempt.totalScore >= 70 ? '#dcfce7' : attempt.totalScore >= 50 ? '#fef9c3' : '#fee2e2';
-  const gradeColor  = attempt.grade === 'A' ? '#16a34a' : attempt.grade === 'B' ? '#2563eb' : attempt.grade === 'C' ? '#d97706' : '#dc2626';
+  const gradeColor = {
+    A:'text-emerald-400', B:'text-indigo-400', C:'text-amber-400',
+    D:'text-orange-400',  F:'text-red-400'
+  }[attempt.grade] || 'text-white';
 
-  const priorityColor = (p) =>
-    p === 'High'   ? { color:'#dc2626', bg:'#fee2e2' } :
-    p === 'Medium' ? { color:'#d97706', bg:'#fef9c3' } :
-                     { color:'#16a34a', bg:'#dcfce7' };
+  const gradeLabel = {
+    A:'Excellent',B:'Good',C:'Average',D:'Below Average',F:'Needs Work'
+  }[attempt.grade] || '';
 
   return (
-    <div style={s.page} className="rp-page">
-      <style>{mobileCSS}</style>
+    <div className="min-h-screen bg-[#0f172a] text-white font-sans">
 
-      {/* NAV */}
-      <div style={s.topNav}>
-        <div style={s.navBrand}>🎯 MockPrep</div>
-        <button style={s.navBtn} onClick={() => navigate('/dashboard')}>
-          ← Dashboard
-        </button>
+      {/* Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-1/3 w-96 h-96 bg-indigo-600/6 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-600/6 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-dot-pattern opacity-60" />
       </div>
 
-      {/* HERO SCORE CARD */}
-      <div style={s.heroCard} className="rp-hero">
-        <div style={s.heroLeft}>
-          <div style={s.heroMeta}>
-            <span style={s.heroBadge}>{attempt.category}</span>
-            <span style={s.heroDate}>
-              {new Date(attempt.createdAt).toLocaleDateString('en-IN', {
-                day:'numeric', month:'long', year:'numeric',
-                hour:'2-digit', minute:'2-digit'
-              })}
-            </span>
-          </div>
-          <h1 style={s.heroTitle}>{attempt.role}</h1>
-          <p style={s.heroCompany}>@ {attempt.company}</p>
-          <p style={s.heroFeedback}>{attempt.feedback}</p>
-        </div>
-        <div style={s.heroRight} className="rp-hero-right">
-          <div>
-            <div
-              className="rp-score-big"
-              style={{ ...s.scoreBig, color: scoreColor, background: scoreBg }}
-            >
-              {attempt.totalScore}%
+      {/* Nav */}
+      <div className="relative z-10 sticky top-0" style={{ background:'rgba(15,23,42,0.85)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
+        <div className="max-w-4xl mx-auto px-4 md:px-6 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-brand flex items-center justify-center">
+              <Brain className="w-3.5 h-3.5 text-white" />
             </div>
-            {attempt.grade && (
-              <div style={{ ...s.gradeBig, color: gradeColor }}>
-                Grade: {attempt.grade}
+            <span className="font-bold text-sm">MockPrep</span>
+          </div>
+          <button onClick={() => navigate('/dashboard')} className="btn-ghost text-xs px-3 py-2">
+            <ArrowLeft className="w-3.5 h-3.5" /> Dashboard
+          </button>
+        </div>
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto px-4 md:px-6 py-8 space-y-5">
+
+        {/* ── Hero Score ── */}
+        <motion.div
+          initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
+          className="glass-card rounded-2xl p-6 md:p-8 border-gradient relative overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/6 to-purple-600/4 pointer-events-none" />
+          <div className="relative flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
+            <div className="shrink-0">
+              <ScoreRing score={attempt.totalScore} size={160} />
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                <span className="badge bg-white/5 text-white/50 border border-white/8 text-xs">
+                  {attempt.category}
+                </span>
+                <span className="text-xs text-white/25">
+                  {new Date(attempt.createdAt).toLocaleDateString('en-IN',{
+                    day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'
+                  })}
+                </span>
               </div>
-            )}
-            <div style={s.scoreLabel}>Overall Score</div>
-          </div>
-        </div>
-      </div>
+              <h1 className="text-2xl md:text-3xl font-black text-white mb-1">{attempt.role}</h1>
+              <p className="text-white/40 mb-4">@ {attempt.company}</p>
 
-      {/* STRONGER + WEAKER SECTIONS */}
-      {(attempt.strongerSections?.length > 0 || attempt.weakerSections?.length > 0) && (
-        <div style={s.swGrid} className="rp-swgrid">
-
-          <div style={{ ...s.swCard, borderTop:'3px solid #16a34a' }}>
-            <div style={s.swTitle}>
-              <span style={s.swIcon}>💪</span>
-              <span style={{ color:'#16a34a' }}>Stronger Sections</span>
-            </div>
-            <div style={s.swList}>
-              {(attempt.strongerSections || []).map((point, i) => (
-                <div key={i} style={s.swItem}>
-                  <span style={{ ...s.swDot, background:'#16a34a' }}>✓</span>
-                  <span style={s.swText}>{point}</span>
+              {attempt.grade && (
+                <div className="inline-flex items-center gap-2 mb-4">
+                  <span className={`text-4xl font-black ${gradeColor}`}>{attempt.grade}</span>
+                  <span className={`text-sm font-semibold ${gradeColor} opacity-70`}>{gradeLabel}</span>
                 </div>
-              ))}
+              )}
+
+              <p className="text-sm text-white/50 leading-relaxed max-w-lg">
+                {attempt.feedback}
+              </p>
             </div>
           </div>
+        </motion.div>
 
-          <div style={{ ...s.swCard, borderTop:'3px solid #dc2626' }}>
-            <div style={s.swTitle}>
-              <span style={s.swIcon}>⚡</span>
-              <span style={{ color:'#dc2626' }}>Weaker Sections</span>
-            </div>
-            <div style={s.swList}>
-              {(attempt.weakerSections || []).map((point, i) => (
-                <div key={i} style={s.swItem}>
-                  <span style={{ ...s.swDot, background:'#dc2626' }}>✗</span>
-                  <span style={s.swText}>{point}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
-      )}
-
-      {/* IMPROVEMENT AREAS */}
-      {attempt.improvementAreas?.length > 0 && (
-        <div style={s.section} className="rp-section">
-          <h2 style={s.sectionTitle}>🎯 Areas to Improve</h2>
-          <div style={s.improveGrid} className="rp-improve-grid">
-            {attempt.improvementAreas.map((item, i) => {
-              const pc = priorityColor(item.priority);
-              return (
-                <div key={i} style={s.improveCard}>
-                  <div style={s.improveCardTop}>
-                    <span style={s.improveTopic}>{item.topic}</span>
-                    <span style={{ ...s.priorityBadge, color: pc.color, background: pc.bg }}>
-                      {item.priority}
-                    </span>
+        {/* ── Stronger / Weaker ── */}
+        {(attempt.strongerSections?.length > 0 || attempt.weakerSections?.length > 0) && (
+          <motion.div
+            variants={stagger} initial="hidden" animate="show"
+            className="grid md:grid-cols-2 gap-4"
+          >
+            {attempt.strongerSections?.length > 0 && (
+              <motion.div variants={fadeUp} className="glass-card rounded-2xl p-5 border border-emerald-500/15">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
                   </div>
-                  <p style={s.improveSuggestion}>→ {item.suggestion}</p>
+                  <span className="text-sm font-semibold text-emerald-400">Stronger Areas</span>
                 </div>
+                <div className="space-y-2.5">
+                  {attempt.strongerSections.map((p, i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <div className="w-4 h-4 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0 mt-0.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      </div>
+                      <span className="text-xs text-white/60 leading-relaxed">{p}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {attempt.weakerSections?.length > 0 && (
+              <motion.div variants={fadeUp} className="glass-card rounded-2xl p-5 border border-red-500/15">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center">
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+                  </div>
+                  <span className="text-sm font-semibold text-red-400">Areas to Improve</span>
+                </div>
+                <div className="space-y-2.5">
+                  {attempt.weakerSections.map((p, i) => (
+                    <div key={i} className="flex items-start gap-2.5">
+                      <div className="w-4 h-4 rounded-full bg-red-500/15 flex items-center justify-center shrink-0 mt-0.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                      </div>
+                      <span className="text-xs text-white/60 leading-relaxed">{p}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+
+        {/* ── Improvement Areas ── */}
+        {attempt.improvementAreas?.length > 0 && (
+          <motion.div
+            initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }}
+            className="glass-card rounded-2xl p-5"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
+              </div>
+              <span className="text-sm font-semibold">Action Plan</span>
+            </div>
+            <div className="grid md:grid-cols-3 gap-3">
+              {attempt.improvementAreas.map((item, i) => {
+                const pColor =
+                  item.priority==='High'   ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                  item.priority==='Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                             'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                return (
+                  <div key={i} className="bg-white/3 rounded-xl p-4 border border-white/6">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <span className="text-xs font-semibold text-white">{item.topic}</span>
+                      <span className={`badge border text-xs shrink-0 ${pColor}`}>{item.priority}</span>
+                    </div>
+                    <p className="text-xs text-white/40 leading-relaxed">→ {item.suggestion}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Answer Breakdown ── */}
+        <motion.div
+          initial={{ opacity:0, y:16 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.3 }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Lightbulb className="w-4 h-4 text-indigo-400" />
+            <h2 className="text-sm font-semibold">Answer Breakdown</h2>
+            <span className="badge bg-white/4 text-white/30 text-xs">{attempt.answers.length} questions</span>
+          </div>
+
+          <div className="space-y-3">
+            {attempt.answers.map((a, i) => {
+              const sc    = a.score >= 70 ? '#22c55e' : a.score >= 50 ? '#6366f1' : '#ef4444';
+              const sbg   = a.score >= 70 ? 'rgba(34,197,94,0.08)' : a.score >= 50 ? 'rgba(99,102,241,0.08)' : 'rgba(239,68,68,0.08)';
+              const open  = expanded === i;
+
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity:0, y:8 }}
+                  animate={{ opacity:1, y:0 }}
+                  transition={{ delay: 0.35 + i * 0.05 }}
+                  className="glass-card rounded-xl overflow-hidden border border-white/5"
+                >
+                  {/* Question header */}
+                  <button
+                    className="w-full flex items-center gap-4 px-5 py-4 hover:bg-white/3 transition-colors text-left"
+                    onClick={() => setExpanded(open ? null : i)}
+                  >
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
+                      style={{ background: sbg, color: sc }}
+                    >
+                      {i+1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-white/80 truncate">{a.question}</div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span
+                        className="text-sm font-bold"
+                        style={{ color: sc }}
+                      >
+                        {a.score}%
+                      </span>
+                      <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration:0.2 }}>
+                        <ChevronDown className="w-4 h-4 text-white/25" />
+                      </motion.div>
+                    </div>
+                  </button>
+
+                  {/* Expanded content */}
+                  <AnimatePresence>
+                    {open && (
+                      <motion.div
+                        initial={{ height:0, opacity:0 }}
+                        animate={{ height:'auto', opacity:1 }}
+                        exit={{ height:0, opacity:0 }}
+                        transition={{ duration:0.25 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-5 pb-5 space-y-4 border-t border-white/5 pt-4">
+                          {/* Your answer */}
+                          <div className="bg-white/3 rounded-xl p-4">
+                            <div className="text-xs font-semibold text-white/25 uppercase tracking-wider mb-2">Your Answer</div>
+                            <p className="text-sm text-white/60 leading-relaxed">
+                              {a.answer || <span className="italic text-white/25">No answer given</span>}
+                            </p>
+                          </div>
+
+                          {/* Feedback grid */}
+                          {a.feedback && (
+                            <div className="grid md:grid-cols-2 gap-3">
+                              <div className="bg-emerald-500/6 rounded-xl p-4 border border-emerald-500/15">
+                                <div className="flex items-center gap-1.5 mb-2">
+                                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                                  <span className="text-xs font-semibold text-emerald-400">What was good</span>
+                                </div>
+                                <p className="text-xs text-white/55 leading-relaxed">{a.strength}</p>
+                              </div>
+                              <div className="bg-amber-500/6 rounded-xl p-4 border border-amber-500/15">
+                                <div className="flex items-center gap-1.5 mb-2">
+                                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                                  <span className="text-xs font-semibold text-amber-400">What to improve</span>
+                                </div>
+                                <div className="space-y-1.5">
+                                  {a.improvement?.split('.').filter(p=>p.trim().length>5).slice(0,3).map((pt,j)=>(
+                                    <div key={j} className="flex items-start gap-2">
+                                      <span className="w-4 h-4 rounded-full bg-amber-500/15 flex items-center justify-center text-amber-400 text-xs font-bold shrink-0 mt-0.5">{j+1}</span>
+                                      <span className="text-xs text-white/50">{pt.trim()}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Ideal answer */}
+                          {a.idealAnswer && (
+                            <div className="bg-indigo-500/6 rounded-xl p-4 border border-indigo-500/15">
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <Lightbulb className="w-3.5 h-3.5 text-indigo-400" />
+                                <span className="text-xs font-semibold text-indigo-400">Strong answer looks like</span>
+                              </div>
+                              <p className="text-xs text-white/55 leading-relaxed">{a.idealAnswer}</p>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               );
             })}
           </div>
+        </motion.div>
+
+        {/* Actions */}
+        <div className="flex gap-3 justify-center pb-8">
+          <button className="btn-ghost" onClick={() => navigate('/dashboard')}>
+            <ArrowLeft className="w-4 h-4" /> Dashboard
+          </button>
+          <button className="btn-primary" onClick={() => navigate('/dashboard')}>
+            <RotateCcw className="w-4 h-4" /> Practice Again
+          </button>
         </div>
-      )}
 
-      {/* ANSWER BREAKDOWN */}
-      <div style={s.section} className="rp-section">
-        <h2 style={s.sectionTitle}>📝 Answer Breakdown</h2>
-        {attempt.answers.map((a, i) => {
-          const qColor = a.score >= 70 ? '#16a34a' : a.score >= 50 ? '#d97706' : '#dc2626';
-          const qBg    = a.score >= 70 ? '#dcfce7' : a.score >= 50 ? '#fef9c3' : '#fee2e2';
-          return (
-            <div key={i} style={s.answerCard} className="rp-answer-card">
-
-              <div style={s.answerHeader}>
-                <div style={s.answerHeaderLeft}>
-                  <span style={s.qLabel}>Q{i + 1}</span>
-                  <p style={s.question}>{a.question}</p>
-                </div>
-                <span style={{ ...s.qScore, color: qColor, background: qBg }}>
-                  {a.score}%
-                </span>
-              </div>
-
-              <div style={s.yourAnswer}>
-                <p style={s.yourAnswerLabel}>Your Answer</p>
-                {a.answer
-                  ? <p style={s.answerText}>{a.answer}</p>
-                  : <p style={s.noAnswer}>No answer given</p>
-                }
-              </div>
-
-              {a.feedback && (
-                <div style={s.aiFeedbackBox}>
-                  <div style={s.feedbackGrid} className="rp-feedback-grid">
-                    <div style={{ ...s.feedbackCard, borderColor:'#bbf7d0', background:'#f0fdf4' }}>
-                      <div style={s.feedbackCardTitle}>
-                        <span>✅</span> What was good
-                      </div>
-                      <p style={s.feedbackCardText}>{a.strength}</p>
-                    </div>
-                    <div style={{ ...s.feedbackCard, borderColor:'#fde68a', background:'#fffbeb' }}>
-                      <div style={s.feedbackCardTitle}>
-                        <span>⚠️</span> What to improve
-                      </div>
-                      <div style={s.improvementPoints}>
-                        {a.improvement
-                          ?.split('.')
-                          .filter(p => p.trim().length > 5)
-                          .slice(0, 3)
-                          .map((point, j) => (
-                            <div key={j} style={s.improvePoint}>
-                              <span style={s.pointNum}>{j + 1}</span>
-                              <span style={s.pointText}>{point.trim()}</span>
-                            </div>
-                          ))
-                        }
-                      </div>
-                    </div>
-                  </div>
-                  <div style={s.idealBox}>
-                    <div style={s.idealTitle}>💡 What a strong answer looks like</div>
-                    <p style={s.idealText}>{a.idealAnswer}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        <div className="text-center text-xs text-white/15 pb-4">
+          © {new Date().getFullYear()} MockPrep · All rights reserved to <strong className="text-white/25">Dheeraj Kumar</strong>
+        </div>
       </div>
-
-      {/* ACTIONS */}
-      <div style={s.actions} className="rp-actions">
-        <button style={s.btnOutline} onClick={() => navigate('/dashboard')}>
-          ← Dashboard
-        </button>
-        <button style={s.btn} onClick={() => navigate('/dashboard')}>
-          Practice Again →
-        </button>
-      </div>
-
-      <footer style={s.footer}>
-        © {new Date().getFullYear()} MockPrep · All rights reserved to <strong>Dheeraj Kumar</strong>
-      </footer>
     </div>
   );
 }
-
-const s = {
-  page:              { maxWidth:'820px', margin:'0 auto', padding:'0 0 40px', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', background:'#f8fafc', minHeight:'100vh', overflowX:'hidden' },
-  center:            { minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:'16px', fontFamily:'sans-serif', padding:'16px' },
-  emptyIcon:         { fontSize:'40px' },
-  emptyText:         { color:'#64748b', fontSize:'15px' },
-  topNav:            { display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 16px', background:'#fff', borderBottom:'1px solid #e2e8f0', marginBottom:'16px' },
-  navBrand:          { fontSize:'16px', fontWeight:'800', color:'#0f172a' },
-  navBtn:            { padding:'7px 14px', background:'#f1f5f9', color:'#475569', border:'none', borderRadius:'8px', fontSize:'12px', fontWeight:'500', cursor:'pointer', whiteSpace:'nowrap' },
-  heroCard:          { background:'#fff', borderRadius:'14px', boxShadow:'0 2px 12px rgba(0,0,0,0.06)', border:'1px solid #f1f5f9' },
-  heroLeft:          { flex:1, minWidth:0 },
-  heroMeta:          { display:'flex', alignItems:'center', gap:'8px', marginBottom:'8px', flexWrap:'wrap' },
-  heroBadge:         { padding:'3px 10px', background:'#eff6ff', color:'#2563eb', borderRadius:'99px', fontSize:'11px', fontWeight:'600' },
-  heroDate:          { fontSize:'11px', color:'#94a3b8' },
-  heroTitle:         { fontSize:'20px', fontWeight:'800', color:'#0f172a', margin:'0 0 4px', wordBreak:'break-word' },
-  heroCompany:       { fontSize:'13px', color:'#64748b', margin:'0 0 10px' },
-  heroFeedback:      { fontSize:'13px', color:'#475569', lineHeight:'1.7', margin:0 },
-  heroRight:         { flexShrink:0 },
-  scoreBig:          { fontWeight:'800', borderRadius:'14px', display:'inline-block', marginBottom:'6px' },
-  gradeBig:          { fontSize:'17px', fontWeight:'800', marginBottom:'3px', textAlign:'center' },
-  scoreLabel:        { fontSize:'11px', color:'#94a3b8', textAlign:'center' },
-  swGrid:            { display:'grid', gap:'12px' },
-  swCard:            { background:'#fff', borderRadius:'12px', padding:'16px', boxShadow:'0 1px 3px rgba(0,0,0,0.05)', border:'1px solid #f1f5f9' },
-  swTitle:           { display:'flex', alignItems:'center', gap:'8px', fontSize:'14px', fontWeight:'700', color:'#0f172a', marginBottom:'12px' },
-  swIcon:            { fontSize:'16px' },
-  swList:            { display:'flex', flexDirection:'column', gap:'8px' },
-  swItem:            { display:'flex', alignItems:'flex-start', gap:'8px' },
-  swDot:             { width:'18px', height:'18px', borderRadius:'50%', color:'#fff', fontSize:'10px', fontWeight:'700', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:'2px' },
-  swText:            { fontSize:'13px', color:'#334155', lineHeight:'1.6' },
-  section:           { },
-  sectionTitle:      { fontSize:'15px', fontWeight:'700', color:'#0f172a', margin:'0 0 12px' },
-  improveGrid:       { display:'grid', gap:'10px' },
-  improveCard:       { background:'#fff', borderRadius:'10px', padding:'14px', border:'1px solid #f1f5f9', boxShadow:'0 1px 3px rgba(0,0,0,0.04)' },
-  improveCardTop:    { display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'8px', gap:'8px', flexWrap:'wrap' },
-  improveTopic:      { fontSize:'13px', fontWeight:'700', color:'#0f172a' },
-  priorityBadge:     { fontSize:'10px', fontWeight:'700', padding:'2px 8px', borderRadius:'99px', whiteSpace:'nowrap' },
-  improveSuggestion: { fontSize:'12px', color:'#475569', margin:0, lineHeight:'1.6' },
-  answerCard:        { background:'#fff', borderRadius:'12px', border:'1px solid #f1f5f9', boxShadow:'0 1px 3px rgba(0,0,0,0.04)' },
-  answerHeader:      { display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'12px', gap:'10px' },
-  answerHeaderLeft:  { flex:1, minWidth:0 },
-  qLabel:            { fontSize:'10px', fontWeight:'700', color:'#2563eb', background:'#eff6ff', padding:'2px 8px', borderRadius:'99px', display:'inline-block', marginBottom:'6px' },
-  question:          { fontSize:'14px', fontWeight:'600', color:'#0f172a', margin:0, lineHeight:'1.5', wordBreak:'break-word' },
-  qScore:            { fontSize:'13px', fontWeight:'700', padding:'3px 12px', borderRadius:'99px', flexShrink:0 },
-  yourAnswer:        { background:'#f8fafc', borderRadius:'8px', padding:'10px 14px', marginBottom:'12px' },
-  yourAnswerLabel:   { fontSize:'10px', fontWeight:'600', color:'#94a3b8', marginBottom:'5px', textTransform:'uppercase', letterSpacing:'0.5px' },
-  answerText:        { fontSize:'13px', color:'#334155', margin:0, lineHeight:'1.7', wordBreak:'break-word' },
-  noAnswer:          { fontSize:'13px', color:'#94a3b8', margin:0, fontStyle:'italic' },
-  aiFeedbackBox:     { borderTop:'1px solid #f1f5f9', paddingTop:'12px' },
-  feedbackGrid:      { display:'grid', gap:'10px', marginBottom:'10px' },
-  feedbackCard:      { borderRadius:'10px', padding:'12px', border:'1.5px solid' },
-  feedbackCardTitle: { fontSize:'12px', fontWeight:'700', color:'#0f172a', marginBottom:'6px', display:'flex', alignItems:'center', gap:'5px' },
-  feedbackCardText:  { fontSize:'12px', color:'#475569', margin:0, lineHeight:'1.6' },
-  improvementPoints: { display:'flex', flexDirection:'column', gap:'6px' },
-  improvePoint:      { display:'flex', alignItems:'flex-start', gap:'6px' },
-  pointNum:          { width:'16px', height:'16px', borderRadius:'50%', background:'#fef9c3', color:'#d97706', fontSize:'9px', fontWeight:'700', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:'2px' },
-  pointText:         { fontSize:'12px', color:'#475569', lineHeight:'1.5' },
-  idealBox:          { background:'#eff6ff', borderRadius:'8px', padding:'12px 14px', border:'1px solid #bfdbfe' },
-  idealTitle:        { fontSize:'11px', fontWeight:'700', color:'#2563eb', marginBottom:'5px' },
-  idealText:         { fontSize:'12px', color:'#1e3a5f', margin:0, lineHeight:'1.7' },
-  actions:           { display:'flex', gap:'10px', justifyContent:'center' },
-  btn:               { padding:'11px 20px', background:'#2563eb', color:'#fff', border:'none', borderRadius:'10px', fontSize:'14px', fontWeight:'700', cursor:'pointer', flex:'1', maxWidth:'200px', textAlign:'center' },
-  btnOutline:        { padding:'11px 20px', background:'#fff', color:'#2563eb', border:'2px solid #2563eb', borderRadius:'10px', fontSize:'14px', fontWeight:'700', cursor:'pointer', flex:'1', maxWidth:'200px', textAlign:'center' },
-  footer:            { textAlign:'center', padding:'14px', borderTop:'1px solid #e2e8f0', background:'#fff', fontSize:'11px', color:'#94a3b8', marginTop:'8px' },
-};
