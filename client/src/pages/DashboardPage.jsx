@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { getAttempts } from '../services/api';
-import { AnimatedCounter } from '../components/ui/AnimatedCounter';
+import AnimatedCounter from '../components/shared/AnimatedCounter';
 
 // ── Constants ────────────────────────────────────────────────────
 const INTERVIEWS = [

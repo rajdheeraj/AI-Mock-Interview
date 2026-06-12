@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 
-function AnimatedCounter({ to, duration = 1500, suffix = '' }) {
+function AnimatedCounter({
+  to = 0,
+  duration = 1500,
+  suffix = ''
+}) {
   const [count, setCount] = useState(0);
   const raf = useRef(null);
 
