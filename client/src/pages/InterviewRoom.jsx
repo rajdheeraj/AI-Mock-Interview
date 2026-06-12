@@ -168,27 +168,25 @@ export default function InterviewRoom() {
  
   // ── VOICE INPUT ──────────────────────────────────────────────────
   const startListening = () => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { toast.error('Voice not supported. Please type.'); return; }
-    window.speechSynthesis.cancel();
-    const r          = new SR();
-    r.continuous     = true;
-    r.interimResults = true;
-    r.lang           = 'en-US';
-    r.onresult = (e) => {
-      setCurrent(Array.from(e.results).map(x => x[0].transcript).join(''));
-    };
-    r.onerror = () => { setListening(false); toast.error('Voice error. Try typing.'); };
-    r.onend   = () => setListening(false);
-    recognitionRef.current = r;
-    r.start();
-    setListening(true);
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast.error('Voice not supported. Please type.'); return; }
+  window.speechSynthesis.cancel();
+  const r          = new SR();
+  r.continuous     = true;
+  r.interimResults = true;
+  r.lang           = 'en-US';
+  r.onresult = (e) => {
+    const transcript = Array.from(e.results)
+      .map(x => x[0].transcript)
+      .join('');
+    setCurrent(transcript);  // ← make sure this line exists exactly like this
   };
- 
-  const stopListening = () => {
-    recognitionRef.current?.stop();
-    setListening(false);
-  };
+  r.onerror = () => { setListening(false); toast.error('Voice error. Try typing.'); };
+  r.onend   = () => setListening(false);
+  recognitionRef.current = r;
+  r.start();
+  setListening(true);
+};
  
   // ── SCORING (fallback only) ──────────────────────────────────────
   const scoreAnswer = (text) => {
@@ -553,13 +551,13 @@ export default function InterviewRoom() {
             <p style={s.qText}>{questions[step]}</p>
           </div>
  
-          <textarea
-            style={s.textarea}
-            placeholder="Type your answer here, or click Start Voice below..."
-            value={current}
-            onChange={e => setCurrent(e.target.value)}
-            rows={isDesktop ? 9 : 7}
-          />
+         <textarea
+  value={current}
+  onChange={e => setCurrent(e.target.value)}
+  placeholder="Type your answer here, or click Start Voice below..."
+  rows={7}
+  style={s.textarea}
+/>
  
           <div style={s.voiceRow}>
             {!listening ? (
@@ -578,9 +576,15 @@ export default function InterviewRoom() {
           </div>
  
           <div style={s.actionRow}>
-            <button style={s.skipBtn} onClick={() => setCurrent('I need to skip this question.')}>
-              Skip
-            </button>
+           <button
+  style={s.skipBtn}
+  onClick={() => {
+    stopListening();
+    setCurrent('I need to skip this question.');
+  }}
+>
+  Skip
+</button>
             <button
               style={{ ...s.nextBtn, background: theme.color }}
               onClick={handleNext}
