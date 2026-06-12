@@ -1,748 +1,313 @@
-// import { useEffect, useState, useRef } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import toast from 'react-hot-toast';
-// import { useAuth } from '../context/AuthContext';
-// import { getAttempts } from '../services/api';
-
-// const globalCSS = `
-//   * { box-sizing: border-box; }
-//   body { overflow-x: hidden; margin: 0; }
-//   .db-root { display: flex; min-height: 100vh; background: #f0f2f5;
-//     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; }
-//   .db-sidebar {
-//     position: fixed; top: 0; left: 0; height: 100vh; z-index: 300;
-//     background: #0f172a; display: flex; flex-direction: column;
-//     transition: transform 0.32s cubic-bezier(.4,0,.2,1), width 0.32s cubic-bezier(.4,0,.2,1);
-//     overflow: hidden; flex-shrink: 0;
-//   }
-//   @media (min-width: 769px) {
-//     .db-sidebar { position: fixed; transform: translateX(0) !important; }
-//     .db-sidebar.icon-only { width: 64px; }
-//     .db-sidebar.expanded  { width: 220px; }
-//     .db-main { transition: margin-left 0.32s cubic-bezier(.4,0,.2,1); }
-//     .db-main.sidebar-icon { margin-left: 64px; }
-//     .db-main.sidebar-full { margin-left: 220px; }
-//   }
-//   @media (max-width: 768px) {
-//     .db-sidebar { width: 240px !important; transform: translateX(-100%); }
-//     .db-sidebar.mobile-open { transform: translateX(0) !important; }
-//     .db-main { margin-left: 0 !important; }
-//     .db-overlay { display: block !important; }
-//   }
-//   .db-overlay {
-//     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-//     z-index: 299; backdrop-filter: blur(2px); animation: fadeIn 0.2s ease;
-//   }
-//   @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
-//   .db-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
-//   @media (max-width: 1024px) { .db-stats { grid-template-columns: repeat(2,1fr); } }
-//   @media (max-width: 480px)  { .db-stats { grid-template-columns: repeat(2,1fr); gap: 10px; } }
-//   .db-cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 28px; }
-//   @media (max-width: 1200px) { .db-cards { grid-template-columns: repeat(3,1fr); } }
-//   @media (max-width: 900px)  { .db-cards { grid-template-columns: repeat(2,1fr); } }
-//   @media (max-width: 500px)  { .db-cards { grid-template-columns: 1fr; } }
-//   .db-attempt-row { display: flex; align-items: center; padding: 12px 16px;
-//     border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.15s; }
-//   .db-attempt-row:hover { background: #f0f9ff; }
-//   .db-attempt-row:last-child { border-bottom: none; }
-//   .db-col-main  { flex: 2; display: flex; align-items: center; gap: 10px; min-width: 0; }
-//   .db-col-cat   { flex: 1; text-align: center; }
-//   .db-col-score { flex: 1; text-align: center; }
-//   .db-col-date  { flex: 1; text-align: right; font-size: 12px; color: #94a3b8; }
-//   @media (max-width: 600px) {
-//     .db-col-cat  { display: none; }
-//     .db-col-date { display: none; }
-//     .db-col-score { flex: 0 0 60px; }
-//   }
-//   .db-card { transition: transform 0.18s ease, box-shadow 0.18s ease; cursor: pointer; }
-//   .db-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.12) !important; }
-//   .db-nav-item { display: flex; align-items: center; gap: 12px;
-//     padding: 11px 16px; color: #94a3b8; cursor: pointer;
-//     transition: background 0.15s, color 0.15s; border-left: 3px solid transparent; white-space: nowrap; }
-//   .db-nav-item:hover { background: #1e293b; color: #e2e8f0; }
-//   .db-nav-item.active { background: #1e3a5f; color: #fff; border-left-color: #3b82f6; }
-//   .db-main { flex: 1; min-width: 0; padding: 0; overflow-x: hidden; }
-//   .db-topbar { display: flex; align-items: center; justify-content: space-between;
-//     padding: 14px 24px; background: #fff; border-bottom: 1px solid #e8eaed;
-//     position: sticky; top: 0; z-index: 100; gap: 12px; }
-//   @media (max-width: 600px) { .db-topbar { padding: 12px 14px; } }
-//   .db-search { display: flex; align-items: center; gap: 8px;
-//     background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px;
-//     padding: 8px 14px; flex: 1; max-width: 280px; transition: border-color 0.2s; }
-//   .db-search:focus-within { border-color: #3b82f6; }
-//   .db-search input { border: none; background: transparent; outline: none;
-//     font-size: 13px; color: #334155; width: 100%; }
-//   @media (max-width: 500px) { .db-search { max-width: 160px; } }
-//   .db-content { padding: 22px 24px; }
-//   @media (max-width: 600px) { .db-content { padding: 14px; } }
-//   .db-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
-//   .db-section-header { display: flex; justify-content: space-between; align-items: center;
-//     margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
-//   .db-main::-webkit-scrollbar { width: 4px; }
-//   .db-main::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
-// `;
-
-// const INTERVIEWS = [
-//   { id:'1', company:'TCS',         role:'Software Engineer',  category:'Full Stack', icon:'💻', color:'#3b82f6', bg:'#eff6ff', border:'#bfdbfe' },
-//   { id:'2', company:'Wipro',       role:'Full Stack (MERN)',   category:'Full Stack', icon:'⚛️', color:'#8b5cf6', bg:'#f5f3ff', border:'#ddd6fe' },
-//   { id:'3', company:'Deloitte',    role:'Associate SWE',       category:'Backend',    icon:'🔧', color:'#10b981', bg:'#ecfdf5', border:'#a7f3d0' },
-//   { id:'4', company:'Infosys',     role:'Frontend Developer',  category:'Frontend',   icon:'🎨', color:'#f59e0b', bg:'#fffbeb', border:'#fde68a' },
-//   { id:'5', company:'HCL',         role:'Full Stack (Java)',   category:'Full Stack', icon:'☕', color:'#ef4444', bg:'#fef2f2', border:'#fecaca' },
-//   { id:'6', company:'Accenture',   role:'Python Developer',    category:'Backend',    icon:'🐍', color:'#06b6d4', bg:'#ecfeff', border:'#a5f3fc' },
-//   { id:'7', company:'Any Company', role:'HR Round',            category:'HR',         icon:'🤝', color:'#ec4899', bg:'#fdf2f8', border:'#fbcfe8' },
-//   { id:'8', company:'Any Company', role:'Sales Interview',     category:'Sales',      icon:'📈', color:'#f97316', bg:'#fff7ed', border:'#fed7aa' },
-// ];
-
-// const CATEGORIES = ['All', 'Full Stack', 'Frontend', 'Backend', 'HR', 'Sales'];
-
-// const NAV_ITEMS = [
-//   { icon:'🏠', label:'Dashboard'   },
-//   { icon:'📋', label:'My Attempts' },
-//   { icon:'📊', label:'Analytics'   },
-//   { icon:'⚙️', label:'Settings'    },
-// ];
-
-// function scoreColor(score) {
-//   return score >= 70 ? '#16a34a' : score >= 50 ? '#d97706' : '#dc2626';
-// }
-// function scoreBg(score) {
-//   return score >= 70 ? '#dcfce7' : score >= 50 ? '#fef9c3' : '#fee2e2';
-// }
-
-// function AttemptRow({ a, i, navigate }) {
-//   const [hovered, setHovered] = useState(false);
-//   return (
-//     <div
-//       className="db-attempt-row"
-//       style={{
-//         background: hovered ? '#f0f9ff' : i % 2 === 0 ? '#fff' : '#fafafa',
-//         borderLeft: hovered ? '3px solid #3b82f6' : '3px solid transparent',
-//       }}
-//       onMouseEnter={() => setHovered(true)}
-//       onMouseLeave={() => setHovered(false)}
-//       onClick={() => navigate(`/results/${a._id}`, { state: { attempt: a } })}
-//     >
-//       <div className="db-col-main">
-//         <div style={{ width:'30px', height:'30px', borderRadius:'8px', background:'linear-gradient(135deg,#3b82f6,#8b5cf6)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'12px', flexShrink:0 }}>
-//           {a.company?.charAt(0)}
-//         </div>
-//         <div style={{ minWidth:0 }}>
-//           <div style={{ fontSize:'13px', fontWeight:'600', color:'#0f172a' }}>{a.role}</div>
-//           <div style={{ fontSize:'11px', color:'#64748b' }}>{a.company}</div>
-//         </div>
-//       </div>
-//       <div className="db-col-cat" style={{ flex:1, textAlign:'center' }}>
-//         <span style={{ fontSize:'10px', padding:'2px 8px', background:'#f1f5f9', borderRadius:'99px' }}>
-//           {a.category}
-//         </span>
-//       </div>
-//       <div style={{ flex:1, textAlign:'center' }}>
-//         <span style={{ fontSize:'12px', fontWeight:'700', padding:'3px 10px', borderRadius:'99px', color: scoreColor(a.totalScore), background: scoreBg(a.totalScore) }}>
-//           {a.totalScore}%
-//         </span>
-//       </div>
-//       <div className="db-col-date" style={{ flex:1, textAlign:'right', fontSize:'11px', color:'#94a3b8' }}>
-//         {new Date(a.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}
-//       </div>
-//     </div>
-//   );
-// }
-
-// function AttemptRowFull({ a, i, navigate }) {
-//   const [hovered, setHovered] = useState(false);
-//   const sc = scoreColor(a.totalScore);
-//   const sb = scoreBg(a.totalScore);
-//   const gc = a.grade === 'A' ? '#16a34a' : a.grade === 'B' ? '#2563eb' : a.grade === 'C' ? '#d97706' : '#dc2626';
-//   return (
-//     <div
-//       className="db-attempt-row"
-//       style={{
-//         background: hovered ? '#f0f9ff' : i % 2 === 0 ? '#fff' : '#fafafa',
-//         borderLeft: hovered ? '3px solid #3b82f6' : '3px solid transparent',
-//       }}
-//       onMouseEnter={() => setHovered(true)}
-//       onMouseLeave={() => setHovered(false)}
-//       onClick={() => navigate(`/results/${a._id}`, { state: { attempt: a } })}
-//     >
-//       <div className="db-col-main">
-//         <div style={{ width:'30px', height:'30px', borderRadius:'8px', background:'linear-gradient(135deg,#3b82f6,#8b5cf6)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'12px', flexShrink:0 }}>
-//           {a.company?.charAt(0)}
-//         </div>
-//         <div style={{ minWidth:0 }}>
-//           <div style={{ fontSize:'13px', fontWeight:'600', color:'#0f172a', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.role}</div>
-//           <div style={{ fontSize:'11px', color:'#64748b' }}>{a.company}</div>
-//         </div>
-//       </div>
-//       <div className="db-col-cat" style={{ flex:1, textAlign:'center' }}>
-//         <span style={{ fontSize:'10px', padding:'2px 8px', background:'#f1f5f9', borderRadius:'99px' }}>{a.category}</span>
-//       </div>
-//       <div style={{ flex:1, textAlign:'center' }}>
-//         <span style={{ fontSize:'12px', fontWeight:'700', padding:'3px 10px', borderRadius:'99px', color: sc, background: sb }}>
-//           {a.totalScore}%
-//         </span>
-//       </div>
-//       <div style={{ flex:1, textAlign:'center' }}>
-//         <span style={{ fontSize:'12px', fontWeight:'700', padding:'3px 10px', borderRadius:'99px', color: gc, background: sb }}>
-//           {a.grade || 'N/A'}
-//         </span>
-//       </div>
-//       <div className="db-col-date" style={{ flex:1, textAlign:'right', fontSize:'11px', color:'#94a3b8' }}>
-//         {new Date(a.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}
-//       </div>
-//     </div>
-//   );
-// }
-
-// function EmptyState({ icon, title, sub, btn, onBtn }) {
-//   return (
-//     <div style={{ textAlign:'center', padding:'44px 20px', background:'#fff', borderRadius:'14px', border:'1px solid #f1f5f9', marginBottom:'20px' }}>
-//       <div style={{ fontSize:'38px', marginBottom:'12px' }}>{icon}</div>
-//       <div style={{ fontSize:'15px', fontWeight:'700', color:'#334155', marginBottom:'6px' }}>{title}</div>
-//       {sub && <div style={{ fontSize:'12px', color:'#94a3b8', marginBottom:'16px' }}>{sub}</div>}
-//       {btn && (
-//         <button onClick={onBtn} style={{ padding:'10px 22px', background:'#3b82f6', color:'#fff', border:'none', borderRadius:'10px', cursor:'pointer', fontSize:'13px', fontWeight:'600' }}>
-//           {btn}
-//         </button>
-//       )}
-//     </div>
-//   );
-// }
-
-// export default function DashboardPage() {
-//   const { user, logout } = useAuth();
-//   const navigate = useNavigate();
-
-//   const [attempts,     setAttempts]     = useState([]);
-//   const [filter,       setFilter]       = useState('All');
-//   const [loading,      setLoading]      = useState(true);
-//   const [activeNav,    setActiveNav]    = useState('Dashboard');
-//   const [sideOpen,     setSideOpen]     = useState(false);
-//   const [sideExpanded, setSideExpanded] = useState(false);
-//   const [hoveredCard,  setHoveredCard]  = useState(null);
-//   const [isMobile,     setIsMobile]     = useState(window.innerWidth <= 768);
-//   const [searchQuery,  setSearchQuery]  = useState('');
-
-//   const sidebarRef = useRef(null);
-
-//   useEffect(() => {
-//     const onResize = () => setIsMobile(window.innerWidth <= 768);
-//     window.addEventListener('resize', onResize);
-//     return () => window.removeEventListener('resize', onResize);
-//   }, []);
-
-//   useEffect(() => {
-//     const handler = (e) => {
-//       if (isMobile && sideOpen && sidebarRef.current && !sidebarRef.current.contains(e.target)) {
-//         setSideOpen(false);
-//       }
-//     };
-//     document.addEventListener('mousedown', handler);
-//     document.addEventListener('touchstart', handler);
-//     return () => {
-//       document.removeEventListener('mousedown', handler);
-//       document.removeEventListener('touchstart', handler);
-//     };
-//   }, [isMobile, sideOpen]);
-
-//   useEffect(() => {
-//     if (isMobile) document.body.style.overflow = sideOpen ? 'hidden' : '';
-//     return () => { document.body.style.overflow = ''; };
-//   }, [sideOpen, isMobile]);
-
-//   useEffect(() => {
-//     getAttempts()
-//       .then(({ data }) => setAttempts(data))
-//       .catch(() => toast.error('Could not load attempts'))
-//       .finally(() => setLoading(false));
-//   }, []);
-
-//   // Filter interviews by search query and category
-//   const filtered = INTERVIEWS.filter(iv => {
-//     const matchCat    = filter === 'All' || iv.category === filter;
-//     const matchSearch = searchQuery === '' ||
-//       iv.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//       iv.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//       iv.category.toLowerCase().includes(searchQuery.toLowerCase());
-//     return matchCat && matchSearch;
-//   });
-
-//   const avgScore  = attempts.length ? Math.round(attempts.reduce((s, a) => s + a.totalScore, 0) / attempts.length) : 0;
-//   const bestScore = attempts.length ? Math.max(...attempts.map(a => a.totalScore)) : 0;
-
-//   const toggleSide = () => {
-//     if (isMobile) setSideOpen(o => !o);
-//     else setSideExpanded(o => !o);
-//   };
-
-//   const sideClass = isMobile
-//     ? `db-sidebar ${sideOpen ? 'mobile-open' : ''}`
-//     : `db-sidebar ${sideExpanded ? 'expanded' : 'icon-only'}`;
-
-//   const mainClass = isMobile
-//     ? 'db-main'
-//     : `db-main ${sideExpanded ? 'sidebar-full' : 'sidebar-icon'}`;
-
-//   return (
-//     <>
-//       <style>{globalCSS}</style>
-//       <div className="db-root">
-
-//         {/* Mobile overlay */}
-//         {isMobile && sideOpen && (
-//           <div className="db-overlay" onClick={() => setSideOpen(false)} />
-//         )}
-
-//         {/* ── SIDEBAR ── */}
-//         <aside ref={sidebarRef} className={sideClass}>
-//           <div style={{ padding:'18px 16px 14px', borderBottom:'1px solid #1e293b', display:'flex', alignItems:'center', gap:'10px' }}>
-//             <span style={{ fontSize:'20px' }}>🎯</span>
-//             {(sideExpanded || isMobile) && (
-//               <span style={{ color:'#fff', fontWeight:'800', fontSize:'15px', whiteSpace:'nowrap' }}>MockPrep</span>
-//             )}
-//           </div>
-
-//           <nav style={{ flex:1, paddingTop:'8px' }}>
-//             {NAV_ITEMS.map(({ icon, label }) => (
-//               <div
-//                 key={label}
-//                 className={`db-nav-item ${activeNav === label ? 'active' : ''}`}
-//                 onClick={() => { setActiveNav(label); if (isMobile) setSideOpen(false); }}
-//                 title={label}
-//               >
-//                 <span style={{ fontSize:'19px', minWidth:'22px', textAlign:'center', flexShrink:0 }}>{icon}</span>
-//                 {(sideExpanded || isMobile) && (
-//                   <span style={{ fontSize:'14px', fontWeight:'500' }}>{label}</span>
-//                 )}
-//               </div>
-//             ))}
-//           </nav>
-
-//           <div style={{ borderTop:'1px solid #1e293b', padding:'14px 16px', display:'flex', alignItems:'center', gap:'10px' }}>
-//             <div style={{ width:'34px', height:'34px', borderRadius:'50%', background:'linear-gradient(135deg,#3b82f6,#8b5cf6)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'14px', flexShrink:0 }}>
-//               {user?.name?.charAt(0).toUpperCase()}
-//             </div>
-//             {(sideExpanded || isMobile) && (
-//               <div style={{ overflow:'hidden', flex:1 }}>
-//                 <div style={{ color:'#e2e8f0', fontSize:'12px', fontWeight:'600', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-//                   {user?.name}
-//                 </div>
-//                 <button
-//                   style={{ background:'none', border:'none', color:'#f87171', fontSize:'11px', cursor:'pointer', padding:0, marginTop:'2px' }}
-//                   onClick={() => { logout(); navigate('/'); }}
-//                 >
-//                   Sign out
-//                 </button>
-//               </div>
-//             )}
-//           </div>
-//         </aside>
-
-//         {/* ── MAIN ── */}
-//         <div className={mainClass} style={{ minHeight:'100vh', overflowX:'hidden' }}>
-
-//           {/* ── TOPBAR ── */}
-//           <div className="db-topbar">
-//             {/* Hamburger */}
-//             <button
-//               onClick={toggleSide}
-//               style={{ background:'none', border:'none', cursor:'pointer', padding:'6px', borderRadius:'8px', display:'flex', flexDirection:'column', gap:'5px', flexShrink:0 }}
-//               aria-label="Toggle menu"
-//             >
-//               <span style={{ display:'block', width:'20px', height:'2px', background:'#475569', borderRadius:'2px' }} />
-//               <span style={{ display:'block', width:'16px', height:'2px', background:'#475569', borderRadius:'2px' }} />
-//               <span style={{ display:'block', width:'20px', height:'2px', background:'#475569', borderRadius:'2px' }} />
-//             </button>
-
-//             {/* Page title */}
-//             <div style={{ flex:1, marginLeft:'12px' }}>
-//               <div style={{ fontSize:'15px', fontWeight:'700', color:'#0f172a', lineHeight:'1.2' }}>
-//                 {activeNav === 'Dashboard'   && `Hey, ${user?.name?.split(' ')[0]} 👋`}
-//                 {activeNav === 'My Attempts' && '📋 My Attempts'}
-//                 {activeNav === 'Analytics'   && '📊 Analytics'}
-//                 {activeNav === 'Settings'    && '⚙️ Settings'}
-//               </div>
-//               <div style={{ fontSize:'12px', color:'#64748b', marginTop:'1px' }}>
-//                 {activeNav === 'Dashboard'   && 'Choose a role and start practicing'}
-//                 {activeNav === 'My Attempts' && `${attempts.length} sessions completed`}
-//                 {activeNav === 'Analytics'   && 'Your performance overview'}
-//                 {activeNav === 'Settings'    && 'Manage your account'}
-//               </div>
-//             </div>
-
-//             {/* Search — only show on Dashboard */}
-//             {activeNav === 'Dashboard' && (
-//               <div className="db-search">
-//                 <span style={{ fontSize:'14px' }}>🔍</span>
-//                 <input
-//                   placeholder="Search roles..."
-//                   value={searchQuery}
-//                   onChange={e => setSearchQuery(e.target.value)}
-//                 />
-//               </div>
-//             )}
-
-//             {/* Avatar */}
-//             <div style={{ width:'34px', height:'34px', borderRadius:'50%', background:'linear-gradient(135deg,#3b82f6,#8b5cf6)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'14px', flexShrink:0 }}>
-//               {user?.name?.charAt(0).toUpperCase()}
-//             </div>
-//           </div>
-
-//           {/* ── PAGE CONTENT ── */}
-//           <div className="db-content">
-
-//             {/* ══════════════════════════════════════
-//                 DASHBOARD — search + filters + cards
-//                 ══════════════════════════════════════ */}
-//             {activeNav === 'Dashboard' && (
-//               <>
-//                 {/* Category filters */}
-//                 <div className="db-filters">
-//                   {CATEGORIES.map(c => (
-//                     <button
-//                       key={c}
-//                       onClick={() => setFilter(c)}
-//                       style={{
-//                         padding:'6px 16px', borderRadius:'99px', fontSize:'13px', fontWeight:'500',
-//                         cursor:'pointer', border:'1.5px solid', transition:'all 0.15s',
-//                         background:  filter === c ? '#3b82f6' : '#fff',
-//                         color:       filter === c ? '#fff'    : '#475569',
-//                         borderColor: filter === c ? '#3b82f6' : '#e2e8f0',
-//                       }}
-//                     >
-//                       {c}
-//                     </button>
-//                   ))}
-//                 </div>
-
-//                 {/* Interview cards */}
-//                 {filtered.length === 0 ? (
-//                   <EmptyState
-//                     icon="🔍"
-//                     title="No results found"
-//                     sub={`No interviews match "${searchQuery}"`}
-//                     btn="Clear search"
-//                     onBtn={() => { setSearchQuery(''); setFilter('All'); }}
-//                   />
-//                 ) : (
-//                   <div className="db-cards">
-//                     {filtered.map(iv => (
-//                       <div
-//                         key={iv.id}
-//                         className="db-card"
-//                         style={{ background:'#fff', borderRadius:'14px', overflow:'hidden', border:`1px solid ${iv.border}`, display:'flex', flexDirection:'column' }}
-//                         onMouseEnter={() => setHoveredCard(iv.id)}
-//                         onMouseLeave={() => setHoveredCard(null)}
-//                       >
-//                         <div style={{ height:'4px', background: iv.color }} />
-//                         <div style={{ padding:'16px 16px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-//                           <div style={{ width:'40px', height:'40px', borderRadius:'10px', background: iv.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px' }}>
-//                             {iv.icon}
-//                           </div>
-//                           <span style={{ fontSize:'10px', fontWeight:'700', padding:'3px 8px', borderRadius:'99px', color: iv.color, background: iv.bg, border:`1px solid ${iv.border}` }}>
-//                             {iv.category}
-//                           </span>
-//                         </div>
-//                         <div style={{ padding:'0 16px 14px', flex:1 }}>
-//                           <div style={{ fontSize:'15px', fontWeight:'800', color:'#0f172a', marginBottom:'2px' }}>{iv.company}</div>
-//                           <div style={{ fontSize:'12px', color:'#64748b' }}>{iv.role}</div>
-//                         </div>
-//                         <div style={{ padding:'0 12px 12px' }}>
-//                           <button
-//                             style={{
-//                               width:'100%', padding:'9px', border:`2px solid ${iv.color}`,
-//                               borderRadius:'10px', fontSize:'13px', fontWeight:'700', cursor:'pointer', transition:'all 0.18s',
-//                               background: hoveredCard === iv.id ? iv.color : '#fff',
-//                               color:      hoveredCard === iv.id ? '#fff'   : iv.color,
-//                             }}
-//                             onClick={() => navigate(`/interview/${iv.id}`, { state: iv })}
-//                           >
-//                             {hoveredCard === iv.id ? 'Start Interview →' : 'Start Interview'}
-//                           </button>
-//                         </div>
-//                       </div>
-//                     ))}
-//                   </div>
-//                 )}
-//               </>
-//             )}
-
-//             {/* ══════════════════════════════════════
-//                 MY ATTEMPTS — full history table
-//                 ══════════════════════════════════════ */}
-//             {activeNav === 'My Attempts' && (
-//               <>
-//                 <div className="db-section-header">
-//                   <div>
-//                     <div style={{ fontSize:'16px', fontWeight:'700', color:'#0f172a' }}>All Interview History</div>
-//                     <div style={{ fontSize:'12px', color:'#64748b', marginTop:'2px' }}>Click any row to view full AI feedback and analysis</div>
-//                   </div>
-//                   {attempts.length > 0 && (
-//                     <span style={{ padding:'3px 12px', background:'#eff6ff', color:'#3b82f6', borderRadius:'99px', fontSize:'12px', fontWeight:'600' }}>
-//                       {attempts.length} total
-//                     </span>
-//                   )}
-//                 </div>
-
-//                 {loading ? (
-//                   <EmptyState icon="⏳" title="Loading..." sub="" />
-//                 ) : attempts.length === 0 ? (
-//                   <EmptyState
-//                     icon="🎯"
-//                     title="No attempts yet"
-//                     sub="Complete your first interview to see your history here"
-//                     btn="Start Practicing →"
-//                     onBtn={() => setActiveNav('Dashboard')}
-//                   />
-//                 ) : (
-//                   <div style={{ background:'#fff', borderRadius:'14px', border:'1px solid #f1f5f9', overflow:'hidden', marginBottom:'20px' }}>
-//                     <div style={{ display:'flex', padding:'10px 16px', background:'#f8fafc', borderBottom:'1px solid #f1f5f9', fontSize:'11px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', letterSpacing:'0.5px' }}>
-//                       <span style={{ flex:2 }}>Role &amp; Company</span>
-//                       <span className="db-col-cat" style={{ flex:1, textAlign:'center' }}>Category</span>
-//                       <span style={{ flex:1, textAlign:'center' }}>Score</span>
-//                       <span style={{ flex:1, textAlign:'center' }}>Grade</span>
-//                       <span className="db-col-date" style={{ flex:1, textAlign:'right' }}>Date</span>
-//                     </div>
-//                     {attempts.map((a, i) => (
-//                       <AttemptRowFull key={a._id} a={a} i={i} navigate={navigate} />
-//                     ))}
-//                   </div>
-//                 )}
-//               </>
-//             )}
-
-//             {/* ══════════════════════════════════════
-//                 ANALYTICS — stats + charts
-//                 ══════════════════════════════════════ */}
-//             {activeNav === 'Analytics' && (
-//               <>
-//                 {/* Stats cards */}
-//                 <div className="db-stats" style={{ marginBottom:'20px' }}>
-//                   {[
-//                     { label:'Total attempts', value: attempts.length,  icon:'📝', color:'#3b82f6', bg:'#eff6ff' },
-//                     { label:'Avg. score',     value: `${avgScore}%`,   icon:'📊', color:'#10b981', bg:'#ecfdf5' },
-//                     { label:'Best score',     value: `${bestScore}%`,  icon:'🏆', color:'#f59e0b', bg:'#fffbeb' },
-//                     {
-//                       label:'Pass rate',
-//                       value: attempts.length
-//                         ? `${Math.round((attempts.filter(a => a.totalScore >= 60).length / attempts.length) * 100)}%`
-//                         : '0%',
-//                       icon:'✅', color:'#8b5cf6', bg:'#f5f3ff',
-//                     },
-//                   ].map(({ label, value, icon, color, bg }) => (
-//                     <div key={label} style={{ background:'#fff', borderRadius:'14px', padding:'16px', display:'flex', alignItems:'center', gap:'12px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)', borderTop:`3px solid ${color}` }}>
-//                       <div style={{ width:'42px', height:'42px', borderRadius:'12px', background: bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', flexShrink:0 }}>
-//                         {icon}
-//                       </div>
-//                       <div>
-//                         <div style={{ fontSize:'11px', color:'#64748b', marginBottom:'3px' }}>{label}</div>
-//                         <div style={{ fontSize:'22px', fontWeight:'800', color, lineHeight:1 }}>{value}</div>
-//                       </div>
-//                     </div>
-//                   ))}
-//                 </div>
-
-//                 {attempts.length === 0 ? (
-//                   <EmptyState
-//                     icon="📊"
-//                     title="No data yet"
-//                     sub="Complete interviews to see your analytics here"
-//                     btn="Start Practicing →"
-//                     onBtn={() => setActiveNav('Dashboard')}
-//                   />
-//                 ) : (
-//                   <>
-//                     {/* Score by category */}
-//                     <div style={{ background:'#fff', borderRadius:'14px', padding:'20px', border:'1px solid #f1f5f9', marginBottom:'16px' }}>
-//                       <div style={{ fontSize:'14px', fontWeight:'700', color:'#0f172a', marginBottom:'16px' }}>📈 Score by Category</div>
-//                       {['Full Stack','Frontend','Backend','HR','Sales','General'].map(cat => {
-//                         const catAttempts = attempts.filter(a => a.category === cat);
-//                         if (catAttempts.length === 0) return null;
-//                         const avg = Math.round(catAttempts.reduce((s, a) => s + a.totalScore, 0) / catAttempts.length);
-//                         const col = scoreColor(avg);
-//                         const bg  = scoreBg(avg);
-//                         return (
-//                           <div key={cat} style={{ marginBottom:'14px' }}>
-//                             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'5px' }}>
-//                               <span style={{ fontSize:'13px', fontWeight:'500', color:'#334155' }}>{cat}</span>
-//                               <span style={{ fontSize:'12px', fontWeight:'700', color: col, background: bg, padding:'1px 8px', borderRadius:'99px' }}>
-//                                 {avg}% · {catAttempts.length} attempt{catAttempts.length > 1 ? 's' : ''}
-//                               </span>
-//                             </div>
-//                             <div style={{ height:'8px', background:'#f1f5f9', borderRadius:'99px', overflow:'hidden' }}>
-//                               <div style={{ height:'8px', width:`${avg}%`, background: col, borderRadius:'99px', transition:'width 0.6s ease' }} />
-//                             </div>
-//                           </div>
-//                         );
-//                       })}
-//                     </div>
-
-//                     {/* Grade distribution */}
-//                     <div style={{ background:'#fff', borderRadius:'14px', padding:'20px', border:'1px solid #f1f5f9', marginBottom:'16px' }}>
-//                       <div style={{ fontSize:'14px', fontWeight:'700', color:'#0f172a', marginBottom:'16px' }}>🎓 Grade Distribution</div>
-//                       <div style={{ display:'flex', gap:'10px', flexWrap:'wrap' }}>
-//                         {['A','B','C','D','F'].map(grade => {
-//                           const count = attempts.filter(a => a.grade === grade).length;
-//                           const gc = grade === 'A' ? '#16a34a' : grade === 'B' ? '#2563eb' : grade === 'C' ? '#d97706' : '#dc2626';
-//                           const gb = grade === 'A' ? '#dcfce7' : grade === 'B' ? '#eff6ff'  : grade === 'C' ? '#fef9c3' : '#fee2e2';
-//                           return (
-//                             <div key={grade} style={{ flex:'1', minWidth:'60px', textAlign:'center', background: gb, borderRadius:'12px', padding:'14px 8px', border:`1px solid ${gc}33` }}>
-//                               <div style={{ fontSize:'22px', fontWeight:'800', color: gc }}>{grade}</div>
-//                               <div style={{ fontSize:'20px', fontWeight:'700', color:'#0f172a' }}>{count}</div>
-//                               <div style={{ fontSize:'10px', color:'#64748b' }}>attempt{count !== 1 ? 's' : ''}</div>
-//                             </div>
-//                           );
-//                         })}
-//                       </div>
-//                     </div>
-
-//                     {/* Recent attempts mini list */}
-//                     <div style={{ background:'#fff', borderRadius:'14px', padding:'20px', border:'1px solid #f1f5f9', marginBottom:'16px' }}>
-//                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'14px' }}>
-//                         <div style={{ fontSize:'14px', fontWeight:'700', color:'#0f172a' }}>🕐 Recent Sessions</div>
-//                         <button
-//                           style={{ fontSize:'12px', color:'#3b82f6', background:'none', border:'none', cursor:'pointer', fontWeight:'600' }}
-//                           onClick={() => setActiveNav('My Attempts')}
-//                         >
-//                           View all →
-//                         </button>
-//                       </div>
-//                       {attempts.slice(0, 3).map((a, i) => (
-//                         <AttemptRow key={a._id} a={a} i={i} navigate={navigate} />
-//                       ))}
-//                     </div>
-//                   </>
-//                 )}
-//               </>
-//             )}
-
-//             {/* ══════════════════════════════════════
-//                 SETTINGS — profile + account
-//                 ══════════════════════════════════════ */}
-//             {activeNav === 'Settings' && (
-//               <div style={{ display:'flex', flexDirection:'column', gap:'12px' }}>
-
-//                 {/* Profile */}
-//                 <div style={{ background:'#fff', borderRadius:'14px', padding:'20px', border:'1px solid #f1f5f9' }}>
-//                   <div style={{ fontSize:'13px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'14px' }}>Profile</div>
-//                   <div style={{ display:'flex', alignItems:'center', gap:'14px' }}>
-//                     <div style={{ width:'52px', height:'52px', borderRadius:'50%', background:'linear-gradient(135deg,#3b82f6,#8b5cf6)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'800', fontSize:'20px' }}>
-//                       {user?.name?.charAt(0).toUpperCase()}
-//                     </div>
-//                     <div>
-//                       <div style={{ fontSize:'16px', fontWeight:'700', color:'#0f172a' }}>{user?.name}</div>
-//                       <div style={{ fontSize:'13px', color:'#64748b' }}>{user?.email}</div>
-//                     </div>
-//                   </div>
-//                 </div>
-
-//                 {/* Progress */}
-//                 <div style={{ background:'#fff', borderRadius:'14px', padding:'20px', border:'1px solid #f1f5f9' }}>
-//                   <div style={{ fontSize:'13px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'14px' }}>Your Progress</div>
-//                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px' }}>
-//                     {[
-//                       { label:'Interviews done', value: attempts.length },
-//                       { label:'Avg score',       value: `${avgScore}%` },
-//                       { label:'Best score',      value: `${bestScore}%` },
-//                       { label:'Pass rate',       value: attempts.length ? `${Math.round((attempts.filter(a => a.totalScore >= 60).length / attempts.length) * 100)}%` : '0%' },
-//                     ].map(({ label, value }) => (
-//                       <div key={label} style={{ background:'#f8fafc', borderRadius:'10px', padding:'12px 14px' }}>
-//                         <div style={{ fontSize:'11px', color:'#64748b', marginBottom:'4px' }}>{label}</div>
-//                         <div style={{ fontSize:'18px', fontWeight:'800', color:'#0f172a' }}>{value}</div>
-//                       </div>
-//                     ))}
-//                   </div>
-//                 </div>
-
-//                 {/* Account */}
-//                 <div style={{ background:'#fff', borderRadius:'14px', padding:'20px', border:'1px solid #f1f5f9' }}>
-//                   <div style={{ fontSize:'13px', fontWeight:'700', color:'#64748b', textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'14px' }}>Account</div>
-//                   <button
-//                     style={{ padding:'11px 24px', background:'#fee2e2', color:'#dc2626', border:'none', borderRadius:'10px', fontSize:'14px', fontWeight:'600', cursor:'pointer', width:'100%' }}
-//                     onClick={() => { logout(); navigate('/'); }}
-//                   >
-//                     Sign out of MockPrep
-//                   </button>
-//                 </div>
-
-//               </div>
-//             )}
-
-//           </div>
-
-//           <footer style={{ textAlign:'center', padding:'16px', borderTop:'1px solid #e8eaed', background:'#fff', fontSize:'11px', color:'#94a3b8', marginTop:'8px' }}>
-//             © {new Date().getFullYear()} MockPrep · All rights reserved to <strong>Dheeraj Kumar</strong>
-//           </footer>
-//         </div>
-//       </div>
-//     </>
-//   );
-// }
-
-
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import {
-  LayoutDashboard,
-  ClipboardList,
-  BarChart3,
-  Settings,
-  LogOut,
-  Brain,
-  Search,
-  ChevronRight,
-  TrendingUp,
-  Zap,
-  Target,
-  Award,
-  Play,
-  X,
-  Menu,
-  Sparkles,
-  ArrowUpRight,
-  BookOpen
-} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getAttempts } from '../services/api';
-import AnimatedCounter from '../components/shared/AnimatedCounter';
+import { AnimatedCounter } from '../components/ui/AnimatedCounter';
 
+// ── Constants ────────────────────────────────────────────────────
 const INTERVIEWS = [
-  { id:'1', company:'TCS',         role:'Software Engineer',  category:'Full Stack', emoji:'💻', gradient:'from-blue-600/20 to-cyan-600/10',  border:'border-blue-500/20',  tag:'bg-blue-500/10 text-blue-300' },
-  { id:'2', company:'Wipro',       role:'Full Stack (MERN)',   category:'Full Stack', emoji:'⚛️', gradient:'from-violet-600/20 to-purple-600/10', border:'border-violet-500/20', tag:'bg-violet-500/10 text-violet-300' },
-  { id:'3', company:'Deloitte',    role:'Associate SWE',       category:'Backend',    emoji:'🔧', gradient:'from-emerald-600/20 to-teal-600/10', border:'border-emerald-500/20', tag:'bg-emerald-500/10 text-emerald-300' },
-  { id:'4', company:'Infosys',     role:'Frontend Developer',  category:'Frontend',   emoji:'🎨', gradient:'from-amber-600/20 to-yellow-600/10', border:'border-amber-500/20',  tag:'bg-amber-500/10 text-amber-300' },
-  { id:'5', company:'HCL',         role:'Full Stack (Java)',   category:'Full Stack', emoji:'☕', gradient:'from-red-600/20 to-rose-600/10',    border:'border-red-500/20',    tag:'bg-red-500/10 text-red-300' },
-  { id:'6', company:'Accenture',   role:'Python Developer',    category:'Backend',    emoji:'🐍', gradient:'from-cyan-600/20 to-sky-600/10',    border:'border-cyan-500/20',   tag:'bg-cyan-500/10 text-cyan-300' },
-  { id:'7', company:'Any Company', role:'HR Round',            category:'HR',         emoji:'🤝', gradient:'from-pink-600/20 to-rose-600/10',   border:'border-pink-500/20',   tag:'bg-pink-500/10 text-pink-300' },
-  { id:'8', company:'Any Company', role:'Sales Interview',     category:'Sales',      emoji:'📈', gradient:'from-orange-600/20 to-amber-600/10',border:'border-orange-500/20', tag:'bg-orange-500/10 text-orange-300' },
+  { id:'1', company:'TCS',         role:'Software Engineer',  category:'Full Stack', emoji:'💻', color:'#3b82f6', glow:'rgba(59,130,246,0.15)',  tag:'#1d4ed8', difficulty:'Medium', duration:'20 min' },
+  { id:'2', company:'Wipro',       role:'Full Stack (MERN)',   category:'Full Stack', emoji:'⚛️', color:'#8b5cf6', glow:'rgba(139,92,246,0.15)',   tag:'#6d28d9', difficulty:'Medium', duration:'20 min' },
+  { id:'3', company:'Deloitte',    role:'Associate SWE',       category:'Backend',    emoji:'🔧', color:'#10b981', glow:'rgba(16,185,129,0.15)',   tag:'#047857', difficulty:'Easy',   duration:'15 min' },
+  { id:'4', company:'Infosys',     role:'Frontend Developer',  category:'Frontend',   emoji:'🎨', color:'#f59e0b', glow:'rgba(245,158,11,0.15)',   tag:'#b45309', difficulty:'Easy',   duration:'15 min' },
+  { id:'5', company:'HCL',         role:'Full Stack (Java)',   category:'Full Stack', emoji:'☕', color:'#ef4444', glow:'rgba(239,68,68,0.15)',    tag:'#b91c1c', difficulty:'Hard',   duration:'25 min' },
+  { id:'6', company:'Accenture',   role:'Python Developer',    category:'Backend',    emoji:'🐍', color:'#06b6d4', glow:'rgba(6,182,212,0.15)',    tag:'#0e7490', difficulty:'Medium', duration:'20 min' },
+  { id:'7', company:'Any Company', role:'HR Round',            category:'HR',         emoji:'🤝', color:'#ec4899', glow:'rgba(236,72,153,0.15)',   tag:'#be185d', difficulty:'Easy',   duration:'15 min' },
+  { id:'8', company:'Any Company', role:'Sales Interview',     category:'Sales',      emoji:'📈', color:'#f97316', glow:'rgba(249,115,22,0.15)',   tag:'#c2410c', difficulty:'Medium', duration:'20 min' },
 ];
 
 const CATEGORIES = ['All','Full Stack','Frontend','Backend','HR','Sales'];
 
-const NAV = [
-  { icon: LayoutDashboard, label:'Dashboard'   },
-  { icon: ClipboardList,   label:'My Attempts' },
-  { icon: BarChart3,       label:'Analytics'   },
-  { icon: Settings,        label:'Settings'    },
+const NAV_ITEMS = [
+  { icon:'🏠', label:'Dashboard'   },
+  { icon:'📋', label:'My Attempts' },
+  { icon:'📊', label:'Analytics'   },
+  { icon:'⚙️', label:'Settings'    },
 ];
 
+// ── Animation variants ───────────────────────────────────────────
 const fadeUp = {
-  hidden: { opacity:0, y:16 },
-  show:   { opacity:1, y:0, transition:{ duration:0.4, ease:'easeOut' } },
+  hidden: { opacity:0, y:20 },
+  show:   { opacity:1, y:0, transition:{ duration:0.5, ease:[0.25,0.46,0.45,0.94] } },
 };
-const stagger = { show: { transition: { staggerChildren: 0.07 } } };
+const staggerContainer = {
+  hidden: {},
+  show:   { transition:{ staggerChildren:0.08, delayChildren:0.1 } },
+};
+const scaleIn = {
+  hidden: { opacity:0, scale:0.95 },
+  show:   { opacity:1, scale:1, transition:{ duration:0.4, ease:'easeOut' } },
+};
 
-function ScoreBadge({ score }) {
-  const color =
-    score >= 70 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-    score >= 50 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                  'bg-red-500/10 text-red-400 border-red-500/20';
+// ── Helper ───────────────────────────────────────────────────────
+function getScoreColor(score) {
+  if (score >= 70) return { text:'#22c55e', bg:'rgba(34,197,94,0.1)',  border:'rgba(34,197,94,0.2)'  };
+  if (score >= 50) return { text:'#f59e0b', bg:'rgba(245,158,11,0.1)', border:'rgba(245,158,11,0.2)' };
+  return             { text:'#ef4444', bg:'rgba(239,68,68,0.1)',   border:'rgba(239,68,68,0.2)'   };
+}
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function getDifficultyColor(d) {
+  if (d === 'Easy')   return { text:'#22c55e', bg:'rgba(34,197,94,0.1)'  };
+  if (d === 'Hard')   return { text:'#ef4444', bg:'rgba(239,68,68,0.1)'  };
+  return                     { text:'#f59e0b', bg:'rgba(245,158,11,0.1)' };
+}
+
+// ── Sub-components ───────────────────────────────────────────────
+function StatCard({ label, value, suffix='', icon, color, delay=0 }) {
   return (
-    <span className={`badge border ${color}`}>{score}%</span>
+    <motion.div
+      variants={fadeUp}
+      transition={{ delay }}
+      whileHover={{ y:-3, transition:{ duration:0.2 } }}
+      style={{
+        background:'rgba(17,24,39,0.8)',
+        border:'1px solid rgba(255,255,255,0.06)',
+        borderRadius:16,
+        padding:'20px',
+        backdropFilter:'blur(16px)',
+        position:'relative',
+        overflow:'hidden',
+      }}
+    >
+      <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at top right, ${color}15, transparent 60%)`, pointerEvents:'none' }} />
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12, position:'relative' }}>
+        <span style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.35)', textTransform:'uppercase', letterSpacing:'0.05em' }}>
+          {label}
+        </span>
+        <div style={{ width:32, height:32, borderRadius:10, background:`${color}15`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>
+          {icon}
+        </div>
+      </div>
+      <div style={{ fontSize:28, fontWeight:900, color, position:'relative', lineHeight:1 }}>
+        <AnimatedCounter to={value} suffix={suffix} />
+      </div>
+    </motion.div>
   );
 }
 
+function InterviewCard({ iv, navigate, hoveredCard, setHoveredCard }) {
+  const isHovered = hoveredCard === iv.id;
+  const diff      = getDifficultyColor(iv.difficulty);
+
+  return (
+    <motion.div
+      variants={scaleIn}
+      whileHover={{ y:-6, transition:{ duration:0.25, ease:'easeOut' } }}
+      onMouseEnter={() => setHoveredCard(iv.id)}
+      onMouseLeave={() => setHoveredCard(null)}
+      style={{
+        background:'rgba(17,24,39,0.9)',
+        border:`1px solid ${isHovered ? iv.color + '40' : 'rgba(255,255,255,0.06)'}`,
+        borderRadius:20,
+        overflow:'hidden',
+        display:'flex',
+        flexDirection:'column',
+        cursor:'pointer',
+        transition:'border-color 0.25s ease',
+        boxShadow: isHovered ? `0 20px 40px ${iv.glow}, 0 0 0 1px ${iv.color}30` : '0 2px 8px rgba(0,0,0,0.3)',
+        backdropFilter:'blur(16px)',
+        position:'relative',
+      }}
+    >
+      {/* Top gradient bar */}
+      <div style={{ height:3, background:`linear-gradient(90deg, ${iv.color}, ${iv.color}80)` }} />
+
+      {/* Glow on hover */}
+      <div style={{
+        position:'absolute', inset:0,
+        background:`radial-gradient(circle at top left, ${iv.glow}, transparent 60%)`,
+        opacity: isHovered ? 1 : 0,
+        transition:'opacity 0.3s ease',
+        pointerEvents:'none',
+      }} />
+
+      {/* Card content */}
+      <div style={{ padding:'20px', flex:1, position:'relative' }}>
+        {/* Header */}
+        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:16 }}>
+          <div style={{
+            width:44, height:44, borderRadius:12,
+            background:`${iv.color}15`, border:`1px solid ${iv.color}30`,
+            display:'flex', alignItems:'center', justifyContent:'center', fontSize:22,
+          }}>
+            {iv.emoji}
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:5 }}>
+            <span style={{
+              fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:6,
+              background: diff.bg, color: diff.text,
+            }}>
+              {iv.difficulty}
+            </span>
+            <span style={{
+              fontSize:9, fontWeight:600, padding:'2px 6px', borderRadius:5,
+              background:'rgba(99,102,241,0.1)', color:'#818cf8',
+              display:'flex', alignItems:'center', gap:3,
+            }}>
+              ✨ AI Powered
+            </span>
+          </div>
+        </div>
+
+        {/* Company & role */}
+        <div style={{ marginBottom:12 }}>
+          <div style={{ fontSize:16, fontWeight:800, color:'#fff', marginBottom:3 }}>{iv.company}</div>
+          <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)' }}>{iv.role}</div>
+        </div>
+
+        {/* Meta */}
+        <div style={{ display:'flex', gap:10, marginBottom:16 }}>
+          <span style={{ fontSize:10, color:'rgba(255,255,255,0.25)', display:'flex', alignItems:'center', gap:4 }}>
+            ⏱ {iv.duration}
+          </span>
+          <span style={{ fontSize:10, color:'rgba(255,255,255,0.25)', display:'flex', alignItems:'center', gap:4 }}>
+            💬 8 Questions
+          </span>
+        </div>
+
+        {/* Category badge */}
+        <span style={{
+          fontSize:10, fontWeight:600, padding:'3px 8px', borderRadius:6,
+          background:`${iv.color}12`, color: iv.color,
+          border:`1px solid ${iv.color}25`,
+        }}>
+          {iv.category}
+        </span>
+      </div>
+
+      {/* CTA */}
+      <div style={{ padding:'0 16px 16px', position:'relative' }}>
+        <motion.button
+          whileTap={{ scale:0.97 }}
+          onClick={() => navigate(`/interview/${iv.id}`, { state: iv })}
+          style={{
+            width:'100%', padding:'10px',
+            background: isHovered ? `linear-gradient(135deg, ${iv.color}, ${iv.color}cc)` : 'rgba(255,255,255,0.04)',
+            color: isHovered ? '#fff' : iv.color,
+            border:`1px solid ${isHovered ? 'transparent' : iv.color + '40'}`,
+            borderRadius:12, fontSize:13, fontWeight:700, cursor:'pointer',
+            transition:'all 0.25s ease',
+            boxShadow: isHovered ? `0 4px 20px ${iv.glow}` : 'none',
+          }}
+        >
+          {isHovered ? 'Start Interview →' : 'Start Interview'}
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
+function EmptyState({ onStart }) {
+  return (
+    <motion.div
+      variants={scaleIn}
+      style={{
+        background:'rgba(17,24,39,0.6)',
+        border:'1px solid rgba(255,255,255,0.05)',
+        borderRadius:20, padding:'60px 24px', textAlign:'center',
+        backdropFilter:'blur(16px)',
+      }}
+    >
+      <div style={{ fontSize:56, marginBottom:16, filter:'drop-shadow(0 4px 12px rgba(99,102,241,0.3))' }}>🎯</div>
+      <div style={{ fontSize:20, fontWeight:800, color:'#fff', marginBottom:8 }}>
+        Begin your journey
+      </div>
+      <div style={{ fontSize:14, color:'rgba(255,255,255,0.35)', marginBottom:24, maxWidth:320, margin:'0 auto 24px', lineHeight:1.6 }}>
+        Start your first mock interview and get personalized AI feedback to help you land your dream job.
+      </div>
+      <motion.button
+        whileHover={{ scale:1.03 }} whileTap={{ scale:0.97 }}
+        onClick={onStart}
+        style={{
+          padding:'12px 28px', borderRadius:12, fontSize:14, fontWeight:700, cursor:'pointer',
+          background:'linear-gradient(135deg, #6366f1, #8b5cf6)',
+          color:'#fff', border:'none',
+          boxShadow:'0 0 30px rgba(99,102,241,0.3)',
+        }}
+      >
+        ✨ Start First Interview
+      </motion.button>
+    </motion.div>
+  );
+}
+
+function AttemptRow({ a, i, navigate }) {
+  const [hovered, setHovered] = useState(false);
+  const sc = getScoreColor(a.totalScore);
+
+  return (
+    <motion.div
+      initial={{ opacity:0, x:-10 }}
+      animate={{ opacity:1, x:0 }}
+      transition={{ delay: i * 0.05 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => navigate(`/results/${a._id}`, { state:{ attempt:a } })}
+      style={{
+        display:'flex', alignItems:'center', padding:'13px 16px',
+        borderBottom:'1px solid rgba(255,255,255,0.04)',
+        background: hovered ? 'rgba(99,102,241,0.05)' : 'transparent',
+        cursor:'pointer', transition:'background 0.15s',
+        borderLeft:`2px solid ${hovered ? '#6366f1' : 'transparent'}`,
+      }}
+    >
+      <div style={{ flex:2, display:'flex', alignItems:'center', gap:10, minWidth:0 }}>
+        <div style={{
+          width:32, height:32, borderRadius:8,
+          background:'linear-gradient(135deg, #6366f1, #8b5cf6)',
+          color:'#fff', display:'flex', alignItems:'center',
+          justifyContent:'center', fontWeight:700, fontSize:12, flexShrink:0,
+        }}>
+          {a.company?.charAt(0)}
+        </div>
+        <div style={{ minWidth:0 }}>
+          <div style={{ fontSize:13, fontWeight:600, color:'#fff', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+            {a.role}
+          </div>
+          <div style={{ fontSize:11, color:'rgba(255,255,255,0.3)', marginTop:1 }}>{a.company}</div>
+        </div>
+      </div>
+      <div style={{ flex:1, textAlign:'center' }}>
+        <span style={{
+          fontSize:10, padding:'2px 8px', background:'rgba(255,255,255,0.05)',
+          borderRadius:6, color:'rgba(255,255,255,0.35)',
+        }}>
+          {a.category}
+        </span>
+      </div>
+      <div style={{ flex:1, textAlign:'center' }}>
+        <span style={{
+          fontSize:12, fontWeight:700, padding:'3px 10px', borderRadius:8,
+          color: sc.text, background: sc.bg, border:`1px solid ${sc.border}`,
+        }}>
+          {a.totalScore}%
+        </span>
+      </div>
+      <div style={{ flex:1, textAlign:'center' }}>
+        <span style={{
+          fontSize:13, fontWeight:800,
+          color: a.grade==='A'?'#22c55e':a.grade==='B'?'#6366f1':a.grade==='C'?'#f59e0b':'#ef4444',
+        }}>
+          {a.grade || '—'}
+        </span>
+      </div>
+      <div style={{ flex:1, textAlign:'right', fontSize:11, color:'rgba(255,255,255,0.2)' }}>
+        {new Date(a.createdAt).toLocaleDateString('en-IN',{ day:'numeric', month:'short' })}
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Main Component ───────────────────────────────────────────────
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -753,6 +318,8 @@ export default function DashboardPage() {
   const [activeNav,    setActiveNav]    = useState('Dashboard');
   const [sideOpen,     setSideOpen]     = useState(false);
   const [sideExpanded, setSideExpanded] = useState(false);
+  const [hoveredCard,  setHoveredCard]  = useState(null);
+  const [hoveredNav,   setHoveredNav]   = useState(null);
   const [search,       setSearch]       = useState('');
   const [isMobile,     setIsMobile]     = useState(window.innerWidth <= 768);
   const sidebarRef = useRef(null);
@@ -770,7 +337,10 @@ export default function DashboardPage() {
     };
     document.addEventListener('mousedown', fn);
     document.addEventListener('touchstart', fn);
-    return () => { document.removeEventListener('mousedown', fn); document.removeEventListener('touchstart', fn); };
+    return () => {
+      document.removeEventListener('mousedown', fn);
+      document.removeEventListener('touchstart', fn);
+    };
   }, [isMobile, sideOpen]);
 
   useEffect(() => {
@@ -787,34 +357,62 @@ export default function DashboardPage() {
 
   const filtered = INTERVIEWS.filter(iv => {
     const mc = filter === 'All' || iv.category === filter;
-    const ms = !search || iv.company.toLowerCase().includes(search.toLowerCase()) || iv.role.toLowerCase().includes(search.toLowerCase());
+    const ms = !search ||
+      iv.company.toLowerCase().includes(search.toLowerCase()) ||
+      iv.role.toLowerCase().includes(search.toLowerCase()) ||
+      iv.category.toLowerCase().includes(search.toLowerCase());
     return mc && ms;
   });
 
-  const avgScore  = attempts.length ? Math.round(attempts.reduce((s,a) => s + a.totalScore, 0) / attempts.length) : 0;
-  const bestScore = attempts.length ? Math.max(...attempts.map(a => a.totalScore)) : 0;
-  const passRate  = attempts.length ? Math.round(attempts.filter(a => a.totalScore >= 60).length / attempts.length * 100) : 0;
+  const avgScore  = attempts.length ? Math.round(attempts.reduce((s,a)=>s+a.totalScore,0)/attempts.length) : 0;
+  const bestScore = attempts.length ? Math.max(...attempts.map(a=>a.totalScore)) : 0;
+  const passRate  = attempts.length ? Math.round(attempts.filter(a=>a.totalScore>=60).length/attempts.length*100) : 0;
 
-  const toggleSide = () => isMobile ? setSideOpen(o => !o) : setSideExpanded(o => !o);
-  const sideW      = isMobile ? 240 : sideExpanded ? 220 : 64;
+  // AI readiness score — based on attempts and avg score
+  const readinessScore = attempts.length === 0 ? 0
+    : Math.min(100, Math.round((avgScore * 0.6) + (Math.min(attempts.length, 10) * 4)));
 
-  const getGreeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
-  };
+  // Strongest category
+  const strongestCat = (() => {
+    if (!attempts.length) return null;
+    const cats = ['Full Stack','Frontend','Backend','HR','Sales'];
+    let best = null, bestAvg = 0;
+    cats.forEach(cat => {
+      const ca = attempts.filter(a => a.category === cat);
+      if (!ca.length) return;
+      const avg = ca.reduce((s,a) => s+a.totalScore,0)/ca.length;
+      if (avg > bestAvg) { bestAvg = avg; best = cat; }
+    });
+    return best;
+  })();
+
+  // Weakest category
+  const weakestCat = (() => {
+    if (!attempts.length) return null;
+    const cats = ['Full Stack','Frontend','Backend','HR','Sales'];
+    let worst = null, worstAvg = 101;
+    cats.forEach(cat => {
+      const ca = attempts.filter(a => a.category === cat);
+      if (!ca.length) return;
+      const avg = ca.reduce((s,a) => s+a.totalScore,0)/ca.length;
+      if (avg < worstAvg) { worstAvg = avg; worst = cat; }
+    });
+    return worst;
+  })();
+
+  const sideW  = isMobile ? 240 : sideExpanded ? 220 : 64;
+  const mainML = isMobile ? 0   : sideW;
 
   return (
-    <div className="flex min-h-screen bg-[#0f172a] text-white font-sans overflow-x-hidden">
+    <div style={{ display:'flex', minHeight:'100vh', background:'#0f172a', color:'#fff', fontFamily:'Inter, Plus Jakarta Sans, system-ui, sans-serif', overflowX:'hidden' }}>
 
       {/* ── Overlay ── */}
       <AnimatePresence>
         {isMobile && sideOpen && (
           <motion.div
             initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
             onClick={() => setSideOpen(false)}
+            style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', backdropFilter:'blur(4px)', zIndex:40 }}
           />
         )}
       </AnimatePresence>
@@ -822,509 +420,580 @@ export default function DashboardPage() {
       {/* ── Sidebar ── */}
       <motion.aside
         ref={sidebarRef}
-        className="fixed top-0 left-0 h-screen z-50 flex flex-col overflow-hidden"
+        animate={{ width:sideW, x: isMobile && !sideOpen ? -sideW : 0 }}
+        transition={{ duration:0.3, ease:[0.4,0,0.2,1] }}
         style={{
-          background: 'rgba(15,23,42,0.95)',
-          backdropFilter: 'blur(20px)',
-          borderRight: '1px solid rgba(255,255,255,0.06)',
+          position:'fixed', top:0, left:0, height:'100vh', zIndex:50,
+          background:'rgba(9,14,26,0.95)', backdropFilter:'blur(24px)',
+          borderRight:'1px solid rgba(255,255,255,0.05)',
+          display:'flex', flexDirection:'column', overflow:'hidden', flexShrink:0,
         }}
-        animate={{
-          width: sideW,
-          x: isMobile && !sideOpen ? -sideW : 0,
-        }}
-        transition={{ duration: 0.3, ease: [0.4,0,0.2,1] }}
       >
         {/* Brand */}
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-white/5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-brand flex items-center justify-center shrink-0 glow-brand-sm">
-            <Brain className="w-4 h-4 text-white" />
+        <div style={{ padding:'18px 14px 14px', borderBottom:'1px solid rgba(255,255,255,0.05)', display:'flex', alignItems:'center', gap:10 }}>
+          <div style={{
+            width:32, height:32, borderRadius:10, flexShrink:0,
+            background:'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            display:'flex', alignItems:'center', justifyContent:'center', fontSize:16,
+            boxShadow:'0 0 16px rgba(99,102,241,0.4)',
+          }}>
+            🧠
           </div>
-          {(sideExpanded || isMobile) && (
-            <motion.span
-              initial={{ opacity:0 }} animate={{ opacity:1 }}
-              className="font-bold text-base whitespace-nowrap"
-            >
-              MockPrep
-            </motion.span>
-          )}
+          <AnimatePresence>
+            {(sideExpanded || isMobile) && (
+              <motion.span
+                initial={{ opacity:0, x:-8 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:-8 }}
+                style={{ fontWeight:800, fontSize:15, whiteSpace:'nowrap', letterSpacing:'-0.02em' }}
+              >
+                MockPrep
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto scrollbar-hide">
-          {NAV.map(({ icon: Icon, label }) => (
-            <button
-              key={label}
-              onClick={() => { setActiveNav(label); if (isMobile) setSideOpen(false); }}
-              title={label}
-              className={`nav-item w-full text-left ${activeNav === label ? 'active' : ''}`}
-            >
-              <Icon className="w-4.5 h-4.5 shrink-0" style={{ width:18, height:18 }} />
-              {(sideExpanded || isMobile) && (
-                <motion.span initial={{ opacity:0 }} animate={{ opacity:1 }}>
-                  {label}
-                </motion.span>
-              )}
-            </button>
-          ))}
+        {/* Nav items */}
+        <nav style={{ flex:1, padding:'10px 8px', overflowY:'auto' }}>
+          {NAV_ITEMS.map(({ icon, label }) => {
+            const isActive = activeNav === label;
+            const isHov    = hoveredNav === label;
+            return (
+              <motion.div
+                key={label}
+                whileHover={{ x:2 }}
+                onClick={() => { setActiveNav(label); if (isMobile) setSideOpen(false); }}
+                onMouseEnter={() => setHoveredNav(label)}
+                onMouseLeave={() => setHoveredNav(null)}
+                title={label}
+                style={{
+                  display:'flex', alignItems:'center', gap:11,
+                  padding:'10px 12px', borderRadius:12, cursor:'pointer',
+                  marginBottom:2, transition:'all 0.15s',
+                  background: isActive ? 'rgba(99,102,241,0.15)' : isHov ? 'rgba(255,255,255,0.04)' : 'transparent',
+                  border:`1px solid ${isActive ? 'rgba(99,102,241,0.25)' : 'transparent'}`,
+                  color: isActive ? '#a5b4fc' : 'rgba(255,255,255,0.4)',
+                }}
+              >
+                <span style={{ fontSize:17, minWidth:20, textAlign:'center', flexShrink:0 }}>{icon}</span>
+                <AnimatePresence>
+                  {(sideExpanded || isMobile) && (
+                    <motion.span
+                      initial={{ opacity:0, x:-6 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:-6 }}
+                      style={{ fontSize:13, fontWeight:isActive?600:500, whiteSpace:'nowrap' }}
+                    >
+                      {label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
         </nav>
 
         {/* User */}
-        <div className="p-3 border-t border-white/5">
-          <div className="flex items-center gap-3 px-2 py-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-brand flex items-center justify-center text-sm font-bold shrink-0">
+        <div style={{ padding:'12px 8px', borderTop:'1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', borderRadius:12 }}>
+            <div style={{
+              width:32, height:32, borderRadius:'50%', flexShrink:0,
+              background:'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              fontWeight:700, fontSize:13,
+            }}>
               {user?.name?.charAt(0).toUpperCase()}
             </div>
-            {(sideExpanded || isMobile) && (
-              <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} className="flex-1 min-w-0">
-                <div className="text-xs font-semibold truncate">{user?.name}</div>
-                <button
-                  onClick={() => { logout(); navigate('/'); }}
-                  className="text-xs text-white/30 hover:text-red-400 transition-colors flex items-center gap-1 mt-0.5"
+            <AnimatePresence>
+              {(sideExpanded || isMobile) && (
+                <motion.div
+                  initial={{ opacity:0, x:-6 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:-6 }}
+                  style={{ overflow:'hidden', flex:1 }}
                 >
-                  <LogOut className="w-3 h-3" /> Sign out
-                </button>
-              </motion.div>
-            )}
+                  <div style={{ fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.8)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                    {user?.name}
+                  </div>
+                  <button
+                    onClick={() => { logout(); navigate('/'); }}
+                    style={{ background:'none', border:'none', color:'rgba(239,68,68,0.6)', fontSize:11, cursor:'pointer', padding:0, marginTop:2, transition:'color 0.15s' }}
+                    onMouseEnter={e => e.target.style.color='#ef4444'}
+                    onMouseLeave={e => e.target.style.color='rgba(239,68,68,0.6)'}
+                  >
+                    Sign out
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </motion.aside>
 
       {/* ── Main ── */}
       <motion.div
-        className="flex-1 flex flex-col min-w-0"
-        animate={{ marginLeft: isMobile ? 0 : sideW }}
-        transition={{ duration: 0.3, ease: [0.4,0,0.2,1] }}
+        animate={{ marginLeft: mainML }}
+        transition={{ duration:0.3, ease:[0.4,0,0.2,1] }}
+        style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0, overflowX:'hidden' }}
       >
 
         {/* ── Topbar ── */}
-        <div
-          className="sticky top-0 z-30 flex items-center gap-3 px-4 md:px-6 py-3.5"
-          style={{ background:'rgba(15,23,42,0.85)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(255,255,255,0.05)' }}
-        >
+        <div style={{
+          position:'sticky', top:0, zIndex:30, display:'flex', alignItems:'center',
+          gap:12, padding:'12px 16px md:24px',
+          background:'rgba(9,14,26,0.85)', backdropFilter:'blur(20px)',
+          borderBottom:'1px solid rgba(255,255,255,0.04)',
+        }}>
+          {/* Hamburger */}
           <button
-            onClick={toggleSide}
-            className="p-2 rounded-xl hover:bg-white/6 transition-colors text-white/50 hover:text-white"
+            onClick={() => isMobile ? setSideOpen(o=>!o) : setSideExpanded(o=>!o)}
+            style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:10, padding:'8px', cursor:'pointer', display:'flex', flexDirection:'column', gap:4, flexShrink:0 }}
           >
-            <Menu className="w-5 h-5" />
+            {[0,1,2].map(i => (
+              <div key={i} style={{ width: i===1?14:18, height:2, background:'rgba(255,255,255,0.5)', borderRadius:2 }} />
+            ))}
           </button>
 
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-white leading-none">
+          {/* Title */}
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:'#fff', lineHeight:1.2 }}>
               {activeNav === 'Dashboard'   && `${getGreeting()}, ${user?.name?.split(' ')[0]} 👋`}
-              {activeNav === 'My Attempts' && 'My Attempts'}
-              {activeNav === 'Analytics'   && 'Analytics'}
-              {activeNav === 'Settings'    && 'Settings'}
+              {activeNav === 'My Attempts' && '📋 My Attempts'}
+              {activeNav === 'Analytics'   && '📊 Analytics'}
+              {activeNav === 'Settings'    && '⚙️ Settings'}
             </div>
-            <div className="text-xs text-white/30 mt-0.5">
-              {activeNav === 'Dashboard'   && 'Choose a role and start your mock interview'}
+            <div style={{ fontSize:11, color:'rgba(255,255,255,0.28)', marginTop:1 }}>
+              {activeNav === 'Dashboard'   && 'Choose a role and start practicing'}
               {activeNav === 'My Attempts' && `${attempts.length} sessions completed`}
-              {activeNav === 'Analytics'   && 'Track your performance'}
+              {activeNav === 'Analytics'   && 'Track your interview performance'}
               {activeNav === 'Settings'    && 'Manage your account'}
             </div>
           </div>
 
+          {/* Search — dashboard only */}
           {activeNav === 'Dashboard' && (
-            <div className="hidden sm:flex items-center gap-2 bg-white/4 border border-white/8 rounded-xl px-3 py-2 flex-1 max-w-xs">
-              <Search className="w-3.5 h-3.5 text-white/25 shrink-0" />
+            <div style={{
+              display:'flex', alignItems:'center', gap:8, flex:1, maxWidth:280,
+              background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)',
+              borderRadius:12, padding:'8px 14px', transition:'border-color 0.2s',
+            }}>
+              <span style={{ fontSize:13, color:'rgba(255,255,255,0.2)', flexShrink:0 }}>🔍</span>
               <input
-                className="flex-1 bg-transparent text-xs text-white placeholder:text-white/25 outline-none"
-                placeholder="Search companies, roles..."
+                style={{ flex:1, background:'transparent', border:'none', outline:'none', fontSize:12, color:'#fff' }}
+                placeholder="Search roles..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
               {search && (
-                <button onClick={() => setSearch('')} className="text-white/25 hover:text-white/50">
-                  <X className="w-3.5 h-3.5" />
-                </button>
+                <button onClick={() => setSearch('')} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.3)', cursor:'pointer', fontSize:14, padding:0 }}>×</button>
               )}
             </div>
           )}
 
-          <div className="w-8 h-8 rounded-full bg-gradient-brand flex items-center justify-center text-sm font-bold shrink-0">
+          {/* Avatar */}
+          <div style={{ width:34, height:34, borderRadius:'50%', background:'linear-gradient(135deg, #6366f1, #8b5cf6)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:13, flexShrink:0 }}>
             {user?.name?.charAt(0).toUpperCase()}
           </div>
         </div>
 
-        {/* ── Content ── */}
-        <div className="flex-1 p-4 md:p-6 overflow-x-hidden">
-
-          {/* ══ DASHBOARD ══ */}
+        {/* ── Page Content ── */}
+        <div style={{ flex:1, padding:'20px 16px', overflowX:'hidden' }}>
           <AnimatePresence mode="wait">
+
+            {/* ══════════ DASHBOARD ══════════ */}
             {activeNav === 'Dashboard' && (
-              <motion.div
-                key="dashboard"
-                initial={{ opacity:0, y:10 }}
-                animate={{ opacity:1, y:0 }}
-                exit={{ opacity:0, y:-10 }}
-                transition={{ duration:0.3 }}
-              >
-                {/* Quick stats strip */}
-                {attempts.length > 0 && (
+              <motion.div key="dashboard" initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }} transition={{ duration:0.3 }}>
+
+                {/* ── Hero Section ── */}
+                <motion.div
+                  variants={staggerContainer} initial="hidden" animate="show"
+                  style={{ marginBottom:24 }}
+                >
+                  {/* Hero banner */}
                   <motion.div
-                    variants={stagger} initial="hidden" animate="show"
-                    className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6"
+                    variants={fadeUp}
+                    style={{
+                      background:'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08))',
+                      border:'1px solid rgba(99,102,241,0.2)',
+                      borderRadius:20, padding:'24px', marginBottom:16,
+                      position:'relative', overflow:'hidden',
+                    }}
                   >
-                    {[
-                      { label:'Interviews',  value:attempts.length, suffix:'',  icon:BookOpen,   color:'text-indigo-400', bg:'bg-indigo-500/10' },
-                      { label:'Avg Score',   value:avgScore,        suffix:'%', icon:Target,     color:'text-emerald-400', bg:'bg-emerald-500/10' },
-                      { label:'Best Score',  value:bestScore,       suffix:'%', icon:Award,      color:'text-amber-400', bg:'bg-amber-500/10' },
-                      { label:'Pass Rate',   value:passRate,        suffix:'%', icon:TrendingUp, color:'text-cyan-400', bg:'bg-cyan-500/10' },
-                    ].map(({ label, value, suffix, icon:Icon, color, bg }) => (
-                      <motion.div key={label} variants={fadeUp} className="stat-card">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-xs text-white/35 font-medium">{label}</span>
-                          <div className={`w-7 h-7 rounded-lg ${bg} flex items-center justify-center`}>
-                            <Icon className={`w-3.5 h-3.5 ${color}`} />
+                    <div style={{ position:'absolute', top:-20, right:-20, width:120, height:120, background:'radial-gradient(circle, rgba(99,102,241,0.2), transparent)', borderRadius:'50%', pointerEvents:'none' }} />
+                    <div style={{ position:'absolute', bottom:-30, left:-10, width:100, height:100, background:'radial-gradient(circle, rgba(139,92,246,0.15), transparent)', borderRadius:'50%', pointerEvents:'none' }} />
+
+                    <div style={{ position:'relative', display:'flex', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', gap:16 }}>
+                      <div>
+                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+                          <span style={{ fontSize:11, fontWeight:600, padding:'3px 10px', borderRadius:20, background:'rgba(99,102,241,0.2)', color:'#a5b4fc', border:'1px solid rgba(99,102,241,0.3)' }}>
+                            ✨ AI-Powered Platform
+                          </span>
+                        </div>
+                        <h2 style={{ fontSize:22, fontWeight:900, color:'#fff', margin:'0 0 6px', letterSpacing:'-0.02em' }}>
+                          {attempts.length === 0 ? 'Ready to start your journey?' : 'Keep pushing, you\'re doing great!'}
+                        </h2>
+                        <p style={{ fontSize:13, color:'rgba(255,255,255,0.4)', margin:0, maxWidth:400 }}>
+                          {attempts.length === 0
+                            ? 'Complete mock interviews with real AI evaluation. Practice with top companies.'
+                            : `${attempts.length} interviews done · ${avgScore}% average · ${passRate}% pass rate`}
+                        </p>
+                      </div>
+
+                      {/* Readiness score */}
+                      <div style={{
+                        background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
+                        borderRadius:16, padding:'16px 20px', textAlign:'center', minWidth:130,
+                      }}>
+                        <div style={{ fontSize:10, fontWeight:600, color:'rgba(255,255,255,0.3)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:6 }}>
+                          AI Readiness
+                        </div>
+                        <div style={{ fontSize:32, fontWeight:900, background:'linear-gradient(135deg, #6366f1, #8b5cf6)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', lineHeight:1 }}>
+                          <AnimatedCounter to={readinessScore} suffix="%" />
+                        </div>
+                        <div style={{ marginTop:8, height:4, background:'rgba(255,255,255,0.06)', borderRadius:4, overflow:'hidden' }}>
+                          <motion.div
+                            initial={{ width:0 }}
+                            animate={{ width:`${readinessScore}%` }}
+                            transition={{ duration:1.5, ease:'easeOut', delay:0.5 }}
+                            style={{ height:'100%', background:'linear-gradient(90deg, #6366f1, #8b5cf6)', borderRadius:4 }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Stats row */}
+                  {attempts.length > 0 && (
+                    <motion.div
+                      variants={staggerContainer}
+                      style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))', gap:12, marginBottom:16 }}
+                    >
+                      <StatCard label="Interviews"  value={attempts.length} suffix=""  icon="📝" color="#6366f1" />
+                      <StatCard label="Avg Score"   value={avgScore}        suffix="%" icon="📊" color="#10b981" delay={0.05} />
+                      <StatCard label="Best Score"  value={bestScore}       suffix="%" icon="🏆" color="#f59e0b" delay={0.1} />
+                      <StatCard label="Pass Rate"   value={passRate}        suffix="%" icon="✅" color="#06b6d4" delay={0.15} />
+                    </motion.div>
+                  )}
+
+                  {/* AI Insights panel */}
+                  {attempts.length > 0 && (
+                    <motion.div
+                      variants={fadeUp}
+                      style={{
+                        background:'rgba(17,24,39,0.8)', border:'1px solid rgba(255,255,255,0.06)',
+                        borderRadius:16, padding:'16px 20px', marginBottom:0,
+                        display:'flex', flexWrap:'wrap', gap:16, alignItems:'center',
+                        backdropFilter:'blur(16px)',
+                      }}
+                    >
+                      <div style={{ display:'flex', alignItems:'center', gap:10, flex:1, minWidth:200 }}>
+                        <div style={{ width:36, height:36, borderRadius:10, background:'linear-gradient(135deg, #6366f1, #8b5cf6)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>
+                          🤖
+                        </div>
+                        <div>
+                          <div style={{ fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.3)', marginBottom:2, textTransform:'uppercase', letterSpacing:'0.05em' }}>AI Insight</div>
+                          <div style={{ fontSize:13, color:'rgba(255,255,255,0.7)', fontWeight:500 }}>
+                            {avgScore >= 70
+                              ? 'Great performance! Focus on maintaining consistency.'
+                              : avgScore >= 50
+                              ? 'Good progress! Practice more to improve weak areas.'
+                              : 'Keep practicing — consistency is key for freshers.'}
                           </div>
                         </div>
-                        <div className={`text-2xl font-black ${color}`}>
-                          <AnimatedCounter to={value} suffix={suffix} />
+                      </div>
+                      {strongestCat && (
+                        <div style={{ display:'flex', gap:8 }}>
+                          <div style={{ textAlign:'center', padding:'8px 14px', background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.15)', borderRadius:10 }}>
+                            <div style={{ fontSize:10, color:'rgba(34,197,94,0.6)', marginBottom:2 }}>Strongest</div>
+                            <div style={{ fontSize:12, fontWeight:700, color:'#22c55e' }}>{strongestCat}</div>
+                          </div>
+                          {weakestCat && weakestCat !== strongestCat && (
+                            <div style={{ textAlign:'center', padding:'8px 14px', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.15)', borderRadius:10 }}>
+                              <div style={{ fontSize:10, color:'rgba(239,68,68,0.6)', marginBottom:2 }}>Focus on</div>
+                              <div style={{ fontSize:12, fontWeight:700, color:'#ef4444' }}>{weakestCat}</div>
+                            </div>
+                          )}
                         </div>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
+                      )}
+                    </motion.div>
+                  )}
+                </motion.div>
 
-                {/* AI insight banner */}
-                <motion.div
-                  variants={fadeUp} initial="hidden" animate="show"
-                  className="glass-card rounded-2xl p-4 mb-6 border-gradient relative overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/8 to-purple-600/4 pointer-events-none" />
-                  <div className="relative flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-brand flex items-center justify-center shrink-0 glow-brand-sm">
-                      <Sparkles className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold text-white">
-                        {attempts.length === 0
-                          ? 'Start your first interview'
-                          : avgScore >= 70 ? 'Great progress! Keep it up 🔥'
-                          : 'Practice makes perfect — keep going!'}
-                      </div>
-                      <div className="text-xs text-white/40 mt-0.5">
-                        {attempts.length === 0
-                          ? 'Pick any company below to begin your AI mock interview'
-                          : `You've completed ${attempts.length} interview${attempts.length > 1 ? 's' : ''}. Average score: ${avgScore}%`}
-                      </div>
+                {/* ── Interview Prep Section ── */}
+                <div style={{ marginBottom:12 }}>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14, flexWrap:'wrap', gap:8 }}>
+                    <div>
+                      <div style={{ fontSize:16, fontWeight:800, color:'#fff', letterSpacing:'-0.01em' }}>Interview Prep</div>
+                      <div style={{ fontSize:12, color:'rgba(255,255,255,0.3)', marginTop:2 }}>Choose a company and role to begin</div>
                     </div>
                     {attempts.length > 0 && (
                       <button
-                        onClick={() => setActiveNav('Analytics')}
-                        className="shrink-0 text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium"
+                        onClick={() => setActiveNav('My Attempts')}
+                        style={{ fontSize:11, fontWeight:600, color:'#a5b4fc', background:'rgba(99,102,241,0.1)', border:'1px solid rgba(99,102,241,0.2)', borderRadius:8, padding:'5px 12px', cursor:'pointer' }}
                       >
-                        View insights <ArrowUpRight className="w-3 h-3" />
+                        View History →
                       </button>
                     )}
                   </div>
-                </motion.div>
 
-                {/* Category filters */}
-                <div className="flex gap-2 flex-wrap mb-5">
-                  {CATEGORIES.map(c => (
-                    <button
-                      key={c}
-                      onClick={() => setFilter(c)}
-                      className={`text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-all duration-200 ${
-                        filter === c
-                          ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                          : 'bg-white/4 text-white/40 border border-white/6 hover:text-white/70 hover:bg-white/8'
-                      }`}
+                  {/* Filters */}
+                  <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:16 }}>
+                    {CATEGORIES.map(c => (
+                      <motion.button
+                        key={c}
+                        whileHover={{ scale:1.02 }} whileTap={{ scale:0.97 }}
+                        onClick={() => setFilter(c)}
+                        style={{
+                          padding:'6px 14px', borderRadius:10, fontSize:12, fontWeight:600,
+                          cursor:'pointer', border:'1px solid', transition:'all 0.15s',
+                          background: filter===c ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.03)',
+                          color:       filter===c ? '#a5b4fc'              : 'rgba(255,255,255,0.35)',
+                          borderColor: filter===c ? 'rgba(99,102,241,0.35)' : 'rgba(255,255,255,0.06)',
+                        }}
+                      >
+                        {c}
+                      </motion.button>
+                    ))}
+                  </div>
+
+                  {/* Cards or empty */}
+                  {filtered.length === 0 ? (
+                    <motion.div variants={scaleIn} initial="hidden" animate="show"
+                      style={{ textAlign:'center', padding:'40px 20px', background:'rgba(17,24,39,0.6)', border:'1px solid rgba(255,255,255,0.05)', borderRadius:16 }}>
+                      <div style={{ fontSize:36, marginBottom:10 }}>🔍</div>
+                      <div style={{ fontWeight:600, color:'#fff', marginBottom:6 }}>No results found</div>
+                      <div style={{ fontSize:12, color:'rgba(255,255,255,0.3)', marginBottom:16 }}>Try a different search or filter</div>
+                      <button onClick={() => { setSearch(''); setFilter('All'); }}
+                        style={{ padding:'8px 20px', borderRadius:10, fontSize:12, fontWeight:600, cursor:'pointer', background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.6)', border:'1px solid rgba(255,255,255,0.08)' }}>
+                        Clear filters
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      variants={staggerContainer} initial="hidden" animate="show"
+                      style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:14 }}
                     >
-                      {c}
-                    </button>
-                  ))}
+                      {filtered.map(iv => (
+                        <InterviewCard
+                          key={iv.id} iv={iv} navigate={navigate}
+                          hoveredCard={hoveredCard} setHoveredCard={setHoveredCard}
+                        />
+                      ))}
+                    </motion.div>
+                  )}
                 </div>
 
-                {/* Interview cards */}
-                {filtered.length === 0 ? (
-                  <motion.div
-                    initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }}
-                    className="glass-card rounded-2xl p-12 text-center"
-                  >
-                    <div className="text-4xl mb-3">🔍</div>
-                    <div className="font-semibold text-white mb-1">No results found</div>
-                    <div className="text-sm text-white/30 mb-4">Try a different search or category</div>
-                    <button onClick={() => { setSearch(''); setFilter('All'); }} className="btn-ghost text-xs px-4 py-2">
-                      Clear filters
-                    </button>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    variants={stagger} initial="hidden" animate="show"
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-                  >
-                    {filtered.map(iv => (
-                      <motion.div
-                        key={iv.id}
-                        variants={fadeUp}
-                        whileHover={{ y:-4, transition:{ duration:0.2 } }}
-                        className={`interview-card border ${iv.border}`}
-                      >
-                        {/* Card gradient top */}
-                        <div className={`h-1 w-full bg-gradient-to-r ${iv.gradient.replace('/20','')} opacity-60`} />
+                {/* ── Recent Attempts ── */}
+                <div style={{ marginTop:28 }}>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+                    <div>
+                      <div style={{ fontSize:16, fontWeight:800, color:'#fff' }}>Recent Attempts</div>
+                      <div style={{ fontSize:12, color:'rgba(255,255,255,0.3)', marginTop:2 }}>Your latest sessions</div>
+                    </div>
+                    {attempts.length > 3 && (
+                      <button onClick={() => setActiveNav('My Attempts')}
+                        style={{ fontSize:11, fontWeight:600, color:'#a5b4fc', background:'rgba(99,102,241,0.1)', border:'1px solid rgba(99,102,241,0.2)', borderRadius:8, padding:'5px 12px', cursor:'pointer' }}>
+                        View all →
+                      </button>
+                    )}
+                  </div>
 
-                        <div className={`p-4 bg-gradient-to-b ${iv.gradient}`}>
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="text-2xl">{iv.emoji}</div>
-                            <span className={`badge ${iv.tag}`}>
-                              {iv.category}
-                            </span>
-                          </div>
-                          <div className="font-bold text-white mb-0.5">{iv.company}</div>
-                          <div className="text-xs text-white/45 mb-4">{iv.role}</div>
-
-                          <div className="flex items-center gap-2 text-xs text-white/25 mb-4">
-                            <Zap className="w-3 h-3" />
-                            <span>AI Generated · 8 Questions</span>
-                          </div>
-
-                          <motion.button
-                            whileTap={{ scale:0.97 }}
-                            onClick={() => navigate(`/interview/${iv.id}`, { state: iv })}
-                            className="w-full btn-primary py-2 text-xs justify-center"
-                          >
-                            <Play className="w-3.5 h-3.5" /> Start Interview
-                          </motion.button>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
+                  {loading ? (
+                    <div style={{ display:'flex', justifyContent:'center', padding:'32px' }}>
+                      <div style={{ width:32, height:32, border:'2px solid rgba(99,102,241,0.3)', borderTop:'2px solid #6366f1', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
+                    </div>
+                  ) : attempts.length === 0 ? (
+                    <EmptyState onStart={() => document.getElementById('interview-cards')?.scrollIntoView({ behavior:'smooth' })} />
+                  ) : (
+                    <div style={{ background:'rgba(17,24,39,0.8)', border:'1px solid rgba(255,255,255,0.05)', borderRadius:16, overflow:'hidden', backdropFilter:'blur(16px)' }}>
+                      <div style={{ display:'flex', padding:'10px 16px', borderBottom:'1px solid rgba(255,255,255,0.04)', fontSize:10, fontWeight:700, color:'rgba(255,255,255,0.2)', textTransform:'uppercase', letterSpacing:'0.07em' }}>
+                        <span style={{ flex:2 }}>Role & Company</span>
+                        <span style={{ flex:1, textAlign:'center' }}>Category</span>
+                        <span style={{ flex:1, textAlign:'center' }}>Score</span>
+                        <span style={{ flex:1, textAlign:'center' }}>Grade</span>
+                        <span style={{ flex:1, textAlign:'right' }}>Date</span>
+                      </div>
+                      {attempts.slice(0, 3).map((a, i) => (
+                        <AttemptRow key={a._id} a={a} i={i} navigate={navigate} />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </motion.div>
             )}
 
-            {/* ══ MY ATTEMPTS ══ */}
+            {/* ══════════ MY ATTEMPTS ══════════ */}
             {activeNav === 'My Attempts' && (
-              <motion.div key="attempts" initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}>
-                <div className="flex items-center justify-between mb-5">
+              <motion.div key="attempts" initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }} transition={{ duration:0.3 }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 }}>
                   <div>
-                    <h2 className="text-lg font-bold">Interview History</h2>
-                    <p className="text-xs text-white/30 mt-0.5">Click any row to view full AI feedback</p>
+                    <div style={{ fontSize:18, fontWeight:800, color:'#fff' }}>All Interview History</div>
+                    <div style={{ fontSize:12, color:'rgba(255,255,255,0.3)', marginTop:2 }}>Click any row to view full AI feedback</div>
                   </div>
                   {attempts.length > 0 && (
-                    <span className="badge bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                    <span style={{ fontSize:11, fontWeight:600, padding:'4px 12px', background:'rgba(99,102,241,0.1)', color:'#a5b4fc', border:'1px solid rgba(99,102,241,0.2)', borderRadius:20 }}>
                       {attempts.length} total
                     </span>
                   )}
                 </div>
 
                 {loading ? (
-                  <div className="flex items-center justify-center py-20">
-                    <div className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                  <div style={{ display:'flex', justifyContent:'center', padding:'48px' }}>
+                    <div style={{ width:36, height:36, border:'2px solid rgba(99,102,241,0.3)', borderTop:'2px solid #6366f1', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
                   </div>
                 ) : attempts.length === 0 ? (
-                  <EmptyState
-                    icon="📋" title="No interviews yet"
-                    sub="Complete your first interview to see your history here"
-                    btn="Start Practicing" onBtn={() => setActiveNav('Dashboard')}
-                  />
+                  <EmptyState onStart={() => setActiveNav('Dashboard')} />
                 ) : (
-                  <div className="glass-card rounded-2xl overflow-hidden">
-                    <div className="grid grid-cols-12 px-5 py-3 border-b border-white/5 text-xs font-semibold text-white/25 uppercase tracking-wider">
-                      <span className="col-span-5">Role & Company</span>
-                      <span className="col-span-2 text-center hidden sm:block">Category</span>
-                      <span className="col-span-2 text-center">Score</span>
-                      <span className="col-span-2 text-center hidden md:block">Grade</span>
-                      <span className="col-span-1 text-right hidden lg:block">Date</span>
+                  <div style={{ background:'rgba(17,24,39,0.8)', border:'1px solid rgba(255,255,255,0.05)', borderRadius:16, overflow:'hidden', backdropFilter:'blur(16px)' }}>
+                    <div style={{ display:'flex', padding:'10px 16px', borderBottom:'1px solid rgba(255,255,255,0.04)', fontSize:10, fontWeight:700, color:'rgba(255,255,255,0.2)', textTransform:'uppercase', letterSpacing:'0.07em' }}>
+                      <span style={{ flex:2 }}>Role & Company</span>
+                      <span style={{ flex:1, textAlign:'center' }}>Category</span>
+                      <span style={{ flex:1, textAlign:'center' }}>Score</span>
+                      <span style={{ flex:1, textAlign:'center' }}>Grade</span>
+                      <span style={{ flex:1, textAlign:'right' }}>Date</span>
                     </div>
                     {attempts.map((a, i) => (
-                      <motion.div
-                        key={a._id}
-                        initial={{ opacity:0, x:-10 }}
-                        animate={{ opacity:1, x:0 }}
-                        transition={{ delay: i * 0.04 }}
-                        onClick={() => navigate(`/results/${a._id}`, { state:{ attempt:a } })}
-                        className="grid grid-cols-12 px-5 py-3.5 border-b border-white/4 last:border-0 cursor-pointer hover:bg-white/3 transition-colors group items-center"
-                      >
-                        <div className="col-span-5 flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-gradient-brand flex items-center justify-center text-sm font-bold shrink-0">
-                            {a.company?.charAt(0)}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-sm font-semibold text-white truncate">{a.role}</div>
-                            <div className="text-xs text-white/30">{a.company}</div>
-                          </div>
-                        </div>
-                        <div className="col-span-2 text-center hidden sm:block">
-                          <span className="badge bg-white/4 text-white/40 text-xs">{a.category}</span>
-                        </div>
-                        <div className="col-span-2 text-center">
-                          <ScoreBadge score={a.totalScore} />
-                        </div>
-                        <div className="col-span-2 text-center hidden md:block">
-                          <span className="text-sm font-bold" style={{
-                            color: a.grade==='A'?'#22c55e':a.grade==='B'?'#6366f1':a.grade==='C'?'#f59e0b':'#ef4444'
-                          }}>{a.grade||'—'}</span>
-                        </div>
-                        <div className="col-span-1 text-right text-xs text-white/25 hidden lg:block">
-                          {new Date(a.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}
-                        </div>
-                      </motion.div>
+                      <AttemptRow key={a._id} a={a} i={i} navigate={navigate} />
                     ))}
                   </div>
                 )}
               </motion.div>
             )}
 
-            {/* ══ ANALYTICS ══ */}
+            {/* ══════════ ANALYTICS ══════════ */}
             {activeNav === 'Analytics' && (
-              <motion.div key="analytics" initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}>
+              <motion.div key="analytics" initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }} transition={{ duration:0.3 }}>
                 {attempts.length === 0 ? (
-                  <EmptyState icon="📊" title="No data yet"
-                    sub="Complete interviews to see your analytics"
-                    btn="Start Practicing" onBtn={() => setActiveNav('Dashboard')} />
+                  <EmptyState onStart={() => setActiveNav('Dashboard')} />
                 ) : (
                   <>
-                    <motion.div variants={stagger} initial="hidden" animate="show"
-                      className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-                      {[
-                        { label:'Total',    value:attempts.length, suffix:'',  icon:BookOpen,   color:'text-indigo-400', bg:'bg-indigo-500/10' },
-                        { label:'Average',  value:avgScore,        suffix:'%', icon:Target,     color:'text-emerald-400', bg:'bg-emerald-500/10' },
-                        { label:'Best',     value:bestScore,       suffix:'%', icon:Award,      color:'text-amber-400', bg:'bg-amber-500/10' },
-                        { label:'Pass Rate',value:passRate,        suffix:'%', icon:TrendingUp, color:'text-cyan-400', bg:'bg-cyan-500/10' },
-                      ].map(({ label, value, suffix, icon:Icon, color, bg }) => (
-                        <motion.div key={label} variants={fadeUp} className="stat-card">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs text-white/35">{label}</span>
-                            <div className={`w-7 h-7 rounded-lg ${bg} flex items-center justify-center`}>
-                              <Icon className={`w-3.5 h-3.5 ${color}`} />
-                            </div>
-                          </div>
-                          <div className={`text-2xl font-black ${color}`}>
-                            <AnimatedCounter to={value} suffix={suffix} />
-                          </div>
-                        </motion.div>
-                      ))}
+                    <motion.div
+                      variants={staggerContainer} initial="hidden" animate="show"
+                      style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))', gap:12, marginBottom:20 }}
+                    >
+                      <StatCard label="Total"     value={attempts.length} suffix=""  icon="📝" color="#6366f1" />
+                      <StatCard label="Average"   value={avgScore}        suffix="%" icon="📊" color="#10b981" delay={0.05} />
+                      <StatCard label="Best"      value={bestScore}       suffix="%" icon="🏆" color="#f59e0b" delay={0.1} />
+                      <StatCard label="Pass Rate" value={passRate}        suffix="%" icon="✅" color="#06b6d4" delay={0.15} />
                     </motion.div>
 
-                    {/* Score by category */}
-                    <div className="glass-card rounded-2xl p-5 mb-4">
-                      <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                        <BarChart3 className="w-4 h-4 text-indigo-400" /> Score by Category
-                      </h3>
-                      <div className="space-y-4">
-                        {['Full Stack','Frontend','Backend','HR','Sales'].map(cat => {
-                          const ca  = attempts.filter(a => a.category === cat);
-                          if (!ca.length) return null;
-                          const avg = Math.round(ca.reduce((s,a) => s+a.totalScore,0)/ca.length);
-                          const col = avg>=70?'#22c55e':avg>=50?'#6366f1':'#f59e0b';
-                          return (
-                            <div key={cat}>
-                              <div className="flex justify-between items-center mb-1.5">
-                                <span className="text-xs font-medium text-white/60">{cat}</span>
-                                <span className="text-xs font-bold" style={{ color:col }}>
-                                  {avg}% · {ca.length}
-                                </span>
-                              </div>
-                              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                <motion.div
-                                  initial={{ width:0 }} animate={{ width:`${avg}%` }}
-                                  transition={{ duration:1, ease:'easeOut', delay:0.2 }}
-                                  className="h-full rounded-full"
-                                  style={{ background:col, boxShadow:`0 0 8px ${col}60` }}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
+                    {/* Category bars */}
+                    <motion.div
+                      variants={fadeUp} initial="hidden" animate="show"
+                      style={{ background:'rgba(17,24,39,0.8)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'20px', marginBottom:14, backdropFilter:'blur(16px)' }}
+                    >
+                      <div style={{ fontSize:13, fontWeight:700, color:'#fff', marginBottom:16, display:'flex', alignItems:'center', gap:8 }}>
+                        📊 Score by Category
                       </div>
-                    </div>
+                      {['Full Stack','Frontend','Backend','HR','Sales'].map(cat => {
+                        const ca  = attempts.filter(a => a.category === cat);
+                        if (!ca.length) return null;
+                        const avg = Math.round(ca.reduce((s,a)=>s+a.totalScore,0)/ca.length);
+                        const col = avg>=70?'#22c55e':avg>=50?'#6366f1':'#f59e0b';
+                        return (
+                          <div key={cat} style={{ marginBottom:14 }}>
+                            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                              <span style={{ fontSize:12, fontWeight:500, color:'rgba(255,255,255,0.55)' }}>{cat}</span>
+                              <span style={{ fontSize:11, fontWeight:700, color:col }}>
+                                {avg}% · {ca.length} attempt{ca.length>1?'s':''}
+                              </span>
+                            </div>
+                            <div style={{ height:6, background:'rgba(255,255,255,0.05)', borderRadius:99, overflow:'hidden' }}>
+                              <motion.div
+                                initial={{ width:0 }} animate={{ width:`${avg}%` }}
+                                transition={{ duration:1, ease:'easeOut', delay:0.2 }}
+                                style={{ height:'100%', background:col, borderRadius:99, boxShadow:`0 0 8px ${col}60` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </motion.div>
 
                     {/* Grade distribution */}
-                    <div className="glass-card rounded-2xl p-5">
-                      <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                        <Award className="w-4 h-4 text-amber-400" /> Grade Distribution
-                      </h3>
-                      <div className="flex gap-3">
+                    <motion.div
+                      variants={fadeUp} initial="hidden" animate="show" transition={{ delay:0.1 }}
+                      style={{ background:'rgba(17,24,39,0.8)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'20px', backdropFilter:'blur(16px)' }}
+                    >
+                      <div style={{ fontSize:13, fontWeight:700, color:'#fff', marginBottom:16 }}>🎓 Grade Distribution</div>
+                      <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
                         {['A','B','C','D','F'].map(g => {
-                          const n   = attempts.filter(a => a.grade===g).length;
+                          const n   = attempts.filter(a=>a.grade===g).length;
                           const col = g==='A'?'#22c55e':g==='B'?'#6366f1':g==='C'?'#f59e0b':'#ef4444';
-                          const bg  = g==='A'?'rgba(34,197,94,0.1)':g==='B'?'rgba(99,102,241,0.1)':g==='C'?'rgba(245,158,11,0.1)':'rgba(239,68,68,0.1)';
+                          const bg  = g==='A'?'rgba(34,197,94,0.08)':g==='B'?'rgba(99,102,241,0.08)':g==='C'?'rgba(245,158,11,0.08)':'rgba(239,68,68,0.08)';
                           return (
-                            <div key={g} className="flex-1 rounded-xl p-3 text-center border border-white/6"
-                              style={{ background:bg }}>
-                              <div className="text-xl font-black" style={{ color:col }}>{g}</div>
-                              <div className="text-base font-bold text-white mt-0.5">{n}</div>
-                              <div className="text-xs text-white/25 mt-0.5">attempt{n!==1?'s':''}</div>
+                            <div key={g} style={{ flex:1, minWidth:56, textAlign:'center', background:bg, borderRadius:12, padding:'14px 8px', border:`1px solid ${col}25` }}>
+                              <div style={{ fontSize:20, fontWeight:900, color:col }}>{g}</div>
+                              <div style={{ fontSize:18, fontWeight:700, color:'#fff' }}>{n}</div>
+                              <div style={{ fontSize:9, color:'rgba(255,255,255,0.25)', marginTop:2 }}>attempt{n!==1?'s':''}</div>
                             </div>
                           );
                         })}
                       </div>
-                    </div>
+                    </motion.div>
                   </>
                 )}
               </motion.div>
             )}
 
-            {/* ══ SETTINGS ══ */}
+            {/* ══════════ SETTINGS ══════════ */}
             {activeNav === 'Settings' && (
-              <motion.div key="settings" initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}
-                className="max-w-lg space-y-4">
-                <div className="glass-card rounded-2xl p-5">
-                  <div className="text-xs font-semibold text-white/30 uppercase tracking-wider mb-4">Profile</div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-brand flex items-center justify-center text-xl font-black">
+              <motion.div key="settings" initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }} transition={{ duration:0.3 }}
+                style={{ maxWidth:480, display:'flex', flexDirection:'column', gap:12 }}>
+                {/* Profile */}
+                <motion.div variants={fadeUp} initial="hidden" animate="show"
+                  style={{ background:'rgba(17,24,39,0.8)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'20px', backdropFilter:'blur(16px)' }}>
+                  <div style={{ fontSize:10, fontWeight:700, color:'rgba(255,255,255,0.25)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:14 }}>Profile</div>
+                  <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+                    <div style={{ width:52, height:52, borderRadius:16, background:'linear-gradient(135deg, #6366f1, #8b5cf6)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, fontSize:20 }}>
                       {user?.name?.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <div className="font-semibold text-white">{user?.name}</div>
-                      <div className="text-sm text-white/35">{user?.email}</div>
+                      <div style={{ fontSize:16, fontWeight:700, color:'#fff' }}>{user?.name}</div>
+                      <div style={{ fontSize:12, color:'rgba(255,255,255,0.3)', marginTop:2 }}>{user?.email}</div>
                     </div>
                   </div>
-                </div>
-                <div className="glass-card rounded-2xl p-5">
-                  <div className="text-xs font-semibold text-white/30 uppercase tracking-wider mb-4">Progress</div>
-                  <div className="grid grid-cols-2 gap-3">
+                </motion.div>
+
+                {/* Progress */}
+                <motion.div variants={fadeUp} initial="hidden" animate="show" transition={{ delay:0.05 }}
+                  style={{ background:'rgba(17,24,39,0.8)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'20px', backdropFilter:'blur(16px)' }}>
+                  <div style={{ fontSize:10, fontWeight:700, color:'rgba(255,255,255,0.25)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:14 }}>Your Progress</div>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
                     {[
                       { label:'Interviews', value:attempts.length   },
                       { label:'Avg Score',  value:`${avgScore}%`   },
                       { label:'Best Score', value:`${bestScore}%`  },
                       { label:'Pass Rate',  value:`${passRate}%`   },
                     ].map(({ label, value }) => (
-                      <div key={label} className="bg-white/3 rounded-xl p-3 border border-white/5">
-                        <div className="text-xs text-white/30 mb-1">{label}</div>
-                        <div className="font-bold text-white">{value}</div>
+                      <div key={label} style={{ background:'rgba(255,255,255,0.03)', borderRadius:12, padding:'12px 14px', border:'1px solid rgba(255,255,255,0.05)' }}>
+                        <div style={{ fontSize:10, color:'rgba(255,255,255,0.3)', marginBottom:4 }}>{label}</div>
+                        <div style={{ fontSize:18, fontWeight:800, color:'#fff' }}>{value}</div>
                       </div>
                     ))}
                   </div>
-                </div>
-                <div className="glass-card rounded-2xl p-5">
-                  <div className="text-xs font-semibold text-white/30 uppercase tracking-wider mb-4">Account</div>
-                  <button
+                </motion.div>
+
+                {/* Sign out */}
+                <motion.div variants={fadeUp} initial="hidden" animate="show" transition={{ delay:0.1 }}
+                  style={{ background:'rgba(17,24,39,0.8)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'20px', backdropFilter:'blur(16px)' }}>
+                  <div style={{ fontSize:10, fontWeight:700, color:'rgba(255,255,255,0.25)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:14 }}>Account</div>
+                  <motion.button
+                    whileHover={{ scale:1.01 }} whileTap={{ scale:0.98 }}
                     onClick={() => { logout(); navigate('/'); }}
-                    className="btn-danger w-full justify-center"
+                    style={{ width:'100%', padding:'12px', background:'rgba(239,68,68,0.08)', color:'#f87171', border:'1px solid rgba(239,68,68,0.2)', borderRadius:12, fontSize:13, fontWeight:600, cursor:'pointer' }}
                   >
-                    <LogOut className="w-4 h-4" /> Sign out of MockPrep
-                  </button>
-                </div>
+                    Sign out of MockPrep
+                  </motion.button>
+                </motion.div>
               </motion.div>
             )}
+
           </AnimatePresence>
         </div>
 
-        <footer className="px-6 py-4 border-t border-white/4 text-center text-xs text-white/15">
-          © {new Date().getFullYear()} MockPrep · All rights reserved to <strong className="text-white/25">Dheeraj Kumar</strong>
-        </footer>
+        {/* Footer */}
+        <div style={{ padding:'14px 20px', borderTop:'1px solid rgba(255,255,255,0.04)', textAlign:'center', fontSize:11, color:'rgba(255,255,255,0.12)' }}>
+          © {new Date().getFullYear()} MockPrep · All rights reserved to <strong style={{ color:'rgba(255,255,255,0.2)' }}>Dheeraj Kumar</strong>
+        </div>
       </motion.div>
-    </div>
-  );
-}
 
-function EmptyState({ icon, title, sub, btn, onBtn }) {
-  return (
-    <motion.div
-      initial={{ opacity:0, scale:0.97 }} animate={{ opacity:1, scale:1 }}
-      className="glass-card rounded-2xl p-12 text-center"
-    >
-      <div className="text-5xl mb-4">{icon}</div>
-      <div className="font-semibold text-white mb-1">{title}</div>
-      {sub && <div className="text-sm text-white/30 mb-5">{sub}</div>}
-      {btn && (
-        <button onClick={onBtn} className="btn-primary mx-auto">
-          {btn} <ChevronRight className="w-4 h-4" />
-        </button>
-      )}
-    </motion.div>
+      {/* Spinner keyframe */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
   );
 }
