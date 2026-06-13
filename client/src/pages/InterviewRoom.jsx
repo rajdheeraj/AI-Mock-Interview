@@ -167,7 +167,7 @@ export default function InterviewRoom() {
   }, [step]);
  
   // ── VOICE INPUT ──────────────────────────────────────────────────
-  const startListening = () => {
+ const startListening = () => {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { toast.error('Voice not supported. Please type.'); return; }
   window.speechSynthesis.cancel();
@@ -179,13 +179,18 @@ export default function InterviewRoom() {
     const transcript = Array.from(e.results)
       .map(x => x[0].transcript)
       .join('');
-    setCurrent(transcript);  // ← make sure this line exists exactly like this
+    setCurrent(transcript);
   };
   r.onerror = () => { setListening(false); toast.error('Voice error. Try typing.'); };
   r.onend   = () => setListening(false);
   recognitionRef.current = r;
   r.start();
   setListening(true);
+};
+
+const stopListening = () => {
+  recognitionRef.current?.stop();
+  setListening(false);
 };
  
   // ── SCORING (fallback only) ──────────────────────────────────────
