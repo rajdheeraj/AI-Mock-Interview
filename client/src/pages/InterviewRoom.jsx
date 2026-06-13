@@ -552,12 +552,12 @@ export default function InterviewRoom() {
           </div>
  
          <textarea
-  value={current}
-  onChange={e => setCurrent(e.target.value)}
-  placeholder="Type your answer here, or click Start Voice below..."
-  rows={7}
-  style={s.textarea}
-/>
+           value={current}
+           onChange={e => setCurrent(e.target.value)}
+           placeholder="Type your answer here, or click Start Voice below..."
+           rows={7}
+           style={s.textarea}
+           />
  
           <div style={s.voiceRow}>
             {!listening ? (
