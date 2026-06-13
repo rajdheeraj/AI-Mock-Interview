@@ -266,7 +266,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Content */}
-        <div style={{ flex:1, padding:'18px 20px', maxWidth:1400, width:'100%', margin:'0 auto', boxSizing:'border-box' }}>
+        <div style={{ flex:1, padding:'18px 20px', maxWidth:1600, width:'100%', margin:'0 auto', boxSizing:'border-box' }}>
           <AnimatePresence mode="wait">
 
             {/* ── DASHBOARD ── */}
@@ -274,40 +274,209 @@ export default function DashboardPage() {
               <motion.div key="dash" initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}>
 
                 {/* Hero banner */}
-                <motion.div variants={fadeUp} initial="hidden" animate="show"
-                  style={{ background:'linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.06))', border:'1px solid rgba(99,102,241,0.18)', borderRadius:18, padding:'20px 22px', marginBottom:16, position:'relative', overflow:'hidden' }}>
-                  <div style={{ position:'absolute', top:-30, right:-30, width:150, height:150, background:'radial-gradient(circle,rgba(99,102,241,0.18),transparent)', borderRadius:'50%', pointerEvents:'none' }} />
-                  <div style={{ display:'flex', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between', gap:16, position:'relative' }}>
-                    <div style={{ flex:1, minWidth:200 }}>
-                      <div style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:10, fontWeight:700, padding:'3px 10px', borderRadius:20, background:'rgba(99,102,241,0.18)', color:'#a5b4fc', border:'1px solid rgba(99,102,241,0.28)', marginBottom:8, textTransform:'uppercase', letterSpacing:'0.06em' }}>
-                        ✨ AI-Powered Platform
-                      </div>
-                      <h2 style={{ fontSize:20, fontWeight:900, color:'#fff', margin:'0 0 5px', letterSpacing:'-0.02em' }}>
-                        {attempts.length === 0 ? 'Ready to ace your next interview?' : avgScore >= 70 ? 'Great progress! Keep it up 🔥' : 'Keep practicing — you\'re getting better!'}
-                      </h2>
-                      <p style={{ fontSize:12, color:'rgba(255,255,255,0.38)', margin:0 }}>
-                        {attempts.length === 0
-                          ? 'AI-generated questions · Voice answers · Real-time evaluation'
-                          : `${attempts.length} interview${attempts.length>1?'s':''} done · ${avgScore}% avg · ${passRate}% pass rate`}
-                      </p>
-                    </div>
-                    <div style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, padding:'14px 18px', textAlign:'center', minWidth:120 }}>
-                      <div style={{ fontSize:9, fontWeight:700, color:'rgba(255,255,255,0.28)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:5 }}>AI Readiness</div>
-                      <div style={{ fontSize:28, fontWeight:900, background:'linear-gradient(135deg,#6366f1,#8b5cf6)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', lineHeight:1, marginBottom:8 }}>
-                        <AnimatedCounter to={readiness} suffix="%" />
-                      </div>
-                      <div style={{ height:3, background:'rgba(255,255,255,0.06)', borderRadius:99, overflow:'hidden' }}>
-                        <motion.div initial={{ width:0 }} animate={{ width:`${readiness}%` }} transition={{ duration:1.5, ease:'easeOut', delay:0.5 }}
-                          style={{ height:'100%', background:'linear-gradient(90deg,#6366f1,#8b5cf6)', borderRadius:99 }} />
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
+<motion.div
+variants={fadeUp}
+initial="hidden"
+animate="show"
+style={{
+background:
+'linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.06))',
+border: '1px solid rgba(99,102,241,0.18)',
+borderRadius: 18,
+padding: '28px 32px',
+marginBottom: 16,
+position: 'relative',
+overflow: 'hidden',
+}}
+
+>
+
+  <div
+    style={{
+      position: 'absolute',
+      top: -30,
+      right: -30,
+      width: 150,
+      height: 150,
+      background:
+        'radial-gradient(circle,rgba(99,102,241,0.18),transparent)',
+      borderRadius: '50%',
+      pointerEvents: 'none',
+    }}
+  />
+
+  <div
+    style={{
+      display: 'flex',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 20,
+      position: 'relative',
+    }}
+  >
+    {/* Left Content */}
+    <div style={{ flex: 1, minWidth: 280 }}>
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          fontSize: 10,
+          fontWeight: 700,
+          padding: '4px 10px',
+          borderRadius: 20,
+          background: 'rgba(99,102,241,0.18)',
+          color: '#a5b4fc',
+          border: '1px solid rgba(99,102,241,0.28)',
+          marginBottom: 10,
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+        }}
+      >
+        ✨ AI-Powered Platform
+      </div>
+
+```
+  <h2
+    style={{
+      fontSize: 24,
+      fontWeight: 900,
+      color: '#fff',
+      margin: '0 0 8px',
+      letterSpacing: '-0.02em',
+    }}
+  >
+    {attempts.length === 0
+      ? 'Ready to ace your next interview?'
+      : avgScore >= 70
+      ? 'Great progress! Keep it up 🔥'
+      : "Keep practicing — you're getting better!"}
+  </h2>
+
+  <p
+    style={{
+      fontSize: 13,
+      color: 'rgba(255,255,255,0.45)',
+      marginBottom: 16,
+      lineHeight: 1.6,
+    }}
+  >
+    {attempts.length === 0
+      ? 'AI-generated questions · Voice answers · Real-time evaluation'
+      : `${attempts.length} interview${
+          attempts.length > 1 ? 's' : ''
+        } completed · ${avgScore}% avg score · ${passRate}% pass rate`}
+  </p>
+
+  <motion.button
+    whileHover={{ scale: 1.03 }}
+    whileTap={{ scale: 0.97 }}
+    onClick={() =>
+      window.scrollTo({
+        top: 500,
+        behavior: 'smooth',
+      })
+    }
+    style={{
+      padding: '12px 24px',
+      borderRadius: 12,
+      border: 'none',
+      cursor: 'pointer',
+      fontWeight: 700,
+      fontSize: 14,
+      background:
+        'linear-gradient(135deg,#6366f1,#8b5cf6)',
+      color: '#fff',
+      boxShadow:
+        '0 8px 24px rgba(99,102,241,0.30)',
+    }}
+  >
+    🚀 Start Interview
+  </motion.button>
+</div>
+
+{/* AI Readiness Card */}
+<div
+  style={{
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: 14,
+    padding: '16px 20px',
+    textAlign: 'center',
+    minWidth: 150,
+  }}
+>
+  <div
+    style={{
+      fontSize: 9,
+      fontWeight: 700,
+      color: 'rgba(255,255,255,0.28)',
+      textTransform: 'uppercase',
+      letterSpacing: '0.07em',
+      marginBottom: 5,
+    }}
+  >
+    AI Readiness
+  </div>
+
+  <div
+    style={{
+      fontSize: 28,
+      fontWeight: 900,
+      background:
+        'linear-gradient(135deg,#6366f1,#8b5cf6)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      lineHeight: 1,
+      marginBottom: 8,
+    }}
+  >
+    <AnimatedCounter to={readiness} suffix="%" />
+  </div>
+
+  <div
+    style={{
+      height: 4,
+      background: 'rgba(255,255,255,0.06)',
+      borderRadius: 99,
+      overflow: 'hidden',
+    }}
+  >
+    <motion.div
+      initial={{ width: 0 }}
+      animate={{ width: `${readiness}%` }}
+      transition={{
+        duration: 1.5,
+        ease: 'easeOut',
+        delay: 0.5,
+      }}
+      style={{
+        height: '100%',
+        background:
+          'linear-gradient(90deg,#6366f1,#8b5cf6)',
+        borderRadius: 99,
+      }}
+    />
+  </div>
+</div>
+```
+
+  </div>
+</motion.div>
+
 
                 {/* Stats — only if attempts exist */}
                 {attempts.length > 0 && (
                   <motion.div variants={stagger} initial="hidden" animate="show"
-                    style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:16 }}>
+                   style={{
+  display:'grid',
+  gridTemplateColumns: isMobile
+    ? 'repeat(2,1fr)'
+    : 'repeat(4,1fr)',
+  gap:12,
+  marginBottom:16
+}}>
                     {[
                       { label:'Interviews', value:attempts.length, suffix:'',  icon:'📝', color:'#6366f1' },
                       { label:'Avg Score',  value:avgScore,        suffix:'%', icon:'📊', color:'#10b981' },
@@ -407,7 +576,9 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <motion.div variants={stagger} initial="hidden" animate="show"
-                    style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(190px,1fr))', gap:13, marginBottom:28 }}>
+                    style={{ display:'grid', gridTemplateColumns: isMobile
+  ? '1fr'
+  : 'repeat(auto-fill,minmax(260px,1fr))', gap:13, marginBottom:28 }}>
                     {filtered.map(iv => {
                       const isH = hoveredCard === iv.id;
                       const diff = iv.difficulty==='Easy' ? { color:'#22c55e', bg:'rgba(34,197,94,0.1)' } : iv.difficulty==='Hard' ? { color:'#ef4444', bg:'rgba(239,68,68,0.1)' } : { color:'#f59e0b', bg:'rgba(245,158,11,0.1)' };
@@ -630,7 +801,14 @@ export default function DashboardPage() {
                 ) : (
                   <>
                     <motion.div variants={stagger} initial="hidden" animate="show"
-                      style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:16 }}>
+                      style={{
+  display:'grid',
+  gridTemplateColumns: isMobile
+    ? 'repeat(2,1fr)'
+    : 'repeat(4,1fr)',
+  gap:12,
+  marginBottom:16
+}}>
                       {[
                         { label:'Total',     value:attempts.length, suffix:'',  icon:'📝', color:'#6366f1' },
                         { label:'Average',   value:avgScore,        suffix:'%', icon:'📊', color:'#10b981' },

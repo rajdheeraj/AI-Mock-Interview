@@ -64,45 +64,43 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 md:px-6 py-8 space-y-5">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-8 space-y-6">
 
         {/* ── Hero Score ── */}
-        <motion.div
-          initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
-          className="glass-card rounded-2xl p-6 md:p-8 border-gradient relative overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/6 to-purple-600/4 pointer-events-none" />
-          <div className="relative flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
-            <div className="shrink-0">
-              <ScoreRing score={attempt.totalScore} size={160} />
-            </div>
-            <div className="flex-1 text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                <span className="badge bg-white/5 text-white/50 border border-white/8 text-xs">
-                  {attempt.category}
-                </span>
-                <span className="text-xs text-white/25">
-                  {new Date(attempt.createdAt).toLocaleDateString('en-IN',{
-                    day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'
-                  })}
-                </span>
-              </div>
-              <h1 className="text-2xl md:text-3xl font-black text-white mb-1">{attempt.role}</h1>
-              <p className="text-white/40 mb-4">@ {attempt.company}</p>
+      <motion.div
+  initial={{ opacity:0, y:20 }}
+  animate={{ opacity:1, y:0 }}
+  transition={{ delay:0.15 }}
+  className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+>
+  <div className="glass-card rounded-xl p-4 text-center">
+    <div className="text-xs text-white/40 mb-1">Score</div>
+    <div className="text-2xl font-black text-indigo-400">
+      {attempt.totalScore}%
+    </div>
+  </div>
 
-              {attempt.grade && (
-                <div className="inline-flex items-center gap-2 mb-4">
-                  <span className={`text-4xl font-black ${gradeColor}`}>{attempt.grade}</span>
-                  <span className={`text-sm font-semibold ${gradeColor} opacity-70`}>{gradeLabel}</span>
-                </div>
-              )}
+  <div className="glass-card rounded-xl p-4 text-center">
+    <div className="text-xs text-white/40 mb-1">Grade</div>
+    <div className={`text-2xl font-black ${gradeColor}`}>
+      {attempt.grade}
+    </div>
+  </div>
 
-              <p className="text-sm text-white/50 leading-relaxed max-w-lg">
-                {attempt.feedback}
-              </p>
-            </div>
-          </div>
-        </motion.div>
+  <div className="glass-card rounded-xl p-4 text-center">
+    <div className="text-xs text-white/40 mb-1">Questions</div>
+    <div className="text-2xl font-black text-white">
+      {attempt.answers.length}
+    </div>
+  </div>
+
+  <div className="glass-card rounded-xl p-4 text-center">
+    <div className="text-xs text-white/40 mb-1">Status</div>
+    <div className="text-2xl font-black text-emerald-400">
+      Completed
+    </div>
+  </div>
+</motion.div>
 
         {/* ── Stronger / Weaker ── */}
         {(attempt.strongerSections?.length > 0 || attempt.weakerSections?.length > 0) && (
