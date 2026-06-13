@@ -167,22 +167,42 @@ export default function InterviewRoom() {
   }, [step]);
  
   // ── VOICE INPUT ──────────────────────────────────────────────────
- const startListening = () => {
+const startListening = () => {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { toast.error('Voice not supported. Please type.'); return; }
   window.speechSynthesis.cancel();
-  const r          = new SR();
+
+  const r = new SR();
   r.continuous     = true;
   r.interimResults = true;
   r.lang           = 'en-US';
+
+  let finalTranscript = '';
+
   r.onresult = (e) => {
-    const transcript = Array.from(e.results)
-      .map(x => x[0].transcript)
-      .join('');
-    setCurrent(transcript);
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) {
+        finalTranscript += t + ' ';
+      } else {
+        interim += t;
+      }
+    }
+    // Update textarea with final + interim combined
+    setCurrent(finalTranscript + interim);
   };
-  r.onerror = () => { setListening(false); toast.error('Voice error. Try typing.'); };
-  r.onend   = () => setListening(false);
+
+  r.onerror = (err) => {
+    console.error('Speech error:', err.error);
+    setListening(false);
+    toast.error('Voice error. Try typing.');
+  };
+
+  r.onend = () => {
+    setListening(false);
+  };
+
   recognitionRef.current = r;
   r.start();
   setListening(true);
@@ -292,16 +312,16 @@ const stopListening = () => {
  
   // ── GUARD ────────────────────────────────────────────────────────
   if (!interview) return (
-    <div style={s.fullCenter}>
-      <p style={{ color:'#64748b' }}>No interview selected.</p>
-      <button
-        style={{ padding:'11px 24px', background:'#3b82f6', color:'#fff', border:'none', borderRadius:'8px', fontSize:'14px', fontWeight:'600', cursor:'pointer' }}
-        onClick={() => navigate('/dashboard')}
-      >
-        Back to Dashboard
-      </button>
-    </div>
-  );
+  <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:'16px', background:'#0a0f1e', color:'#fff', fontFamily:'Inter, sans-serif' }}>
+    <p style={{ color:'rgba(255,255,255,0.4)' }}>No interview selected.</p>
+    <button
+      style={{ padding:'11px 24px', background:'linear-gradient(135deg,#6366f1,#8b5cf6)', color:'#fff', border:'none', borderRadius:'10px', fontSize:'14px', fontWeight:'600', cursor:'pointer' }}
+      onClick={() => navigate('/dashboard')}
+    >
+      Back to Dashboard
+    </button>
+  </div>
+);
  
   // ── SCREEN 1 — PERMISSION ────────────────────────────────────────
   if (permissionStatus !== 'granted') return (
@@ -401,27 +421,28 @@ const stopListening = () => {
   );
  
   // ── SCREEN 2 — LOADING QUESTIONS ─────────────────────────────────
-  if (loadingQ) return (
-    <div style={s.fullCenter}>
-      <div style={{ fontSize:'48px', marginBottom:'16px' }}>🤖</div>
-      <h2 style={{ color:'#0f172a', margin:'0 0 8px', fontFamily:'sans-serif', textAlign:'center' }}>
-        Generating your questions...
-      </h2>
-      <p style={{ color:'#64748b', fontSize:'14px', fontFamily:'sans-serif', textAlign:'center', maxWidth:'360px', lineHeight:'1.6' }}>
-        Groq AI is preparing personalized questions for{' '}
-        <strong>{interview?.role}</strong> at <strong>{interview?.company}</strong>
-      </p>
-      <div style={{ marginTop:'24px', display:'flex', gap:'8px' }}>
-        {[0, 1, 2].map(i => (
-          <div key={i} style={{
-            width:'12px', height:'12px', borderRadius:'50%',
-            background: theme.color,
-            animation: `pulse ${0.6 + i * 0.2}s infinite alternate`,
-          }} />
-        ))}
-      </div>
+ if (loadingQ) return (
+  <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:'16px', background:'#0a0f1e', color:'#fff', fontFamily:'Inter, sans-serif' }}>
+    <div style={{ fontSize:'48px', marginBottom:'8px' }}>🤖</div>
+    <h2 style={{ color:'#fff', margin:'0 0 8px', textAlign:'center', fontSize:'20px', fontWeight:'800' }}>
+      Generating your questions...
+    </h2>
+    <p style={{ color:'rgba(255,255,255,0.4)', fontSize:'13px', textAlign:'center', maxWidth:'360px', lineHeight:'1.6', margin:0 }}>
+      Groq AI is preparing personalized questions for{' '}
+      <strong style={{ color:'#a5b4fc' }}>{interview?.role}</strong> at{' '}
+      <strong style={{ color:'#a5b4fc' }}>{interview?.company}</strong>
+    </p>
+    <div style={{ marginTop:'16px', display:'flex', gap:'8px' }}>
+      {[0,1,2].map(i => (
+        <div key={i} style={{
+          width:'10px', height:'10px', borderRadius:'50%',
+          background: theme.color,
+          animation:`pulse ${0.5 + i * 0.15}s ease-in-out infinite alternate`,
+        }} />
+      ))}
     </div>
-  );
+  </div>
+);
  
   // ── SCREEN 3 — PRE-START INFO ────────────────────────────────────
   if (!started) return (
@@ -655,83 +676,85 @@ const stopListening = () => {
 }
  
 const s = {
-  prePage:          { minHeight:'100vh', background:'#f8fafc', display:'flex', flexDirection:'column', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
-  nav:              { display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 32px', background:'#fff', borderBottom:'1px solid #e2e8f0', boxShadow:'0 1px 3px rgba(0,0,0,0.04)' },
-  navBrand:         { fontSize:'18px', fontWeight:'700', color:'#0f172a' },
-  navLinks:         { display:'flex', gap:'4px', alignItems:'center' },
-  navLink:          { background:'none', border:'none', padding:'7px 14px', fontSize:'13px', color:'#475569', cursor:'pointer', borderRadius:'8px', fontWeight:'500' },
-  navLinkAbout:     { background:'#f1f5f9', border:'none', padding:'7px 14px', fontSize:'13px', color:'#334155', cursor:'pointer', borderRadius:'8px', fontWeight:'500' },
-  preCenter:        { flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px 16px' },
-  preCard:          { background:'#fff', borderRadius:'20px', width:'100%', maxWidth:'560px', boxShadow:'0 4px 32px rgba(0,0,0,0.08)', overflow:'hidden' },
-  accentBar:        { height:'5px', width:'100%' },
-  preCardInner:     { padding:'36px 40px', display:'flex', flexDirection:'column', gap:'20px', alignItems:'center', textAlign:'center' },
-  categoryBadge:    { padding:'4px 16px', borderRadius:'99px', fontSize:'12px', fontWeight:'600', letterSpacing:'0.5px' },
-  preTitle:         { fontSize:'30px', fontWeight:'800', color:'#0f172a', margin:0 },
-  preCompany:       { fontSize:'15px', color:'#64748b', margin:0 },
-  statsRow:         { display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'10px', width:'100%' },
-  statBox:          { border:'1.5px solid', borderRadius:'10px', padding:'12px 6px', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px' },
-  statBoxIcon:      { fontSize:'18px' },
-  statBoxVal:       { fontSize:'13px', fontWeight:'700', color:'#0f172a' },
-  statBoxLabel:     { fontSize:'10px', color:'#94a3b8' },
-  instructBox:      { width:'100%', borderRadius:'12px', padding:'16px 20px', textAlign:'left' },
-  instructTitle:    { fontSize:'13px', fontWeight:'700', margin:'0 0 10px', textTransform:'uppercase', letterSpacing:'0.5px' },
-  instructRow:      { fontSize:'13px', color:'#475569', lineHeight:'2' },
-  startBtnBig:      { width:'100%', padding:'15px', color:'#fff', border:'none', borderRadius:'12px', fontSize:'16px', fontWeight:'700', cursor:'pointer', letterSpacing:'0.3px' },
-  footer:           { textAlign:'center', padding:'16px', borderTop:'1px solid #e2e8f0', background:'#fff' },
-  footerText:       { fontSize:'12px', color:'#94a3b8', margin:0 },
-  fullCenter:       { minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:'16px', fontFamily:'sans-serif' },
-  roomPage:         { minHeight:'100vh', background:'#f8fafc', display:'flex', flexDirection:'column', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
-  roomNav:          { display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 16px', background:'#fff', flexWrap:'wrap', gap:'8px' },
+  // ── Pre-interview screens ──────────────────────────────────────
+  prePage:      { minHeight:'100vh', background:'#0a0f1e', display:'flex', flexDirection:'column', fontFamily:'Inter, -apple-system, sans-serif' },
+  nav:          { display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 24px', background:'rgba(6,9,20,0.95)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(255,255,255,0.06)' },
+  navBrand:     { fontSize:'16px', fontWeight:'700', color:'#fff' },
+  navLinks:     { display:'flex', gap:'4px', alignItems:'center' },
+  navLink:      { background:'none', border:'none', padding:'7px 12px', fontSize:'13px', color:'rgba(255,255,255,0.45)', cursor:'pointer', borderRadius:'8px', fontWeight:'500' },
+  navLinkAbout: { background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', padding:'7px 14px', fontSize:'13px', color:'rgba(255,255,255,0.6)', cursor:'pointer', borderRadius:'8px', fontWeight:'500' },
+  preCenter:    { flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:'32px 16px' },
+  preCard:      { background:'rgba(17,24,39,0.95)', borderRadius:'20px', width:'100%', maxWidth:'560px', boxShadow:'0 20px 60px rgba(0,0,0,0.5)', overflow:'hidden', border:'1px solid rgba(255,255,255,0.07)', backdropFilter:'blur(20px)' },
+  accentBar:    { height:'4px', width:'100%' },
+  preCardInner: { padding:'32px 36px', display:'flex', flexDirection:'column', gap:'18px', alignItems:'center', textAlign:'center' },
+  categoryBadge:{ padding:'4px 14px', borderRadius:'99px', fontSize:'11px', fontWeight:'600', letterSpacing:'0.5px' },
+  preTitle:     { fontSize:'26px', fontWeight:'800', color:'#fff', margin:0 },
+  preCompany:   { fontSize:'14px', color:'rgba(255,255,255,0.4)', margin:0 },
+  statsRow:     { display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'8px', width:'100%' },
+  statBox:      { border:'1px solid rgba(255,255,255,0.08)', borderRadius:'10px', padding:'12px 6px', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px', background:'rgba(255,255,255,0.03)' },
+  statBoxIcon:  { fontSize:'18px' },
+  statBoxVal:   { fontSize:'13px', fontWeight:'700', color:'#fff' },
+  statBoxLabel: { fontSize:'9px', color:'rgba(255,255,255,0.3)' },
+  instructBox:  { width:'100%', borderRadius:'12px', padding:'14px 18px', textAlign:'left' },
+  instructTitle:{ fontSize:'11px', fontWeight:'700', margin:'0 0 10px', textTransform:'uppercase', letterSpacing:'0.5px' },
+  instructRow:  { fontSize:'12px', color:'rgba(255,255,255,0.45)', lineHeight:'2.2' },
+  startBtnBig:  { width:'100%', padding:'14px', color:'#fff', border:'none', borderRadius:'12px', fontSize:'15px', fontWeight:'700', cursor:'pointer', letterSpacing:'0.3px', boxShadow:'0 0 24px rgba(99,102,241,0.3)' },
+  footer:       { textAlign:'center', padding:'14px', borderTop:'1px solid rgba(255,255,255,0.05)', background:'rgba(6,9,20,0.8)' },
+  footerText:   { fontSize:'11px', color:'rgba(255,255,255,0.2)', margin:0 },
+  fullCenter:   { minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:'16px', fontFamily:'Inter, sans-serif', background:'#0a0f1e', color:'#fff' },
+
+  // ── Interview room ─────────────────────────────────────────────
+  roomPage:         { minHeight:'100vh', background:'#0a0f1e', display:'flex', flexDirection:'column', fontFamily:'Inter, -apple-system, sans-serif' },
+  roomNav:          { display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 24px', background:'rgba(6,9,20,0.95)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(255,255,255,0.06)', flexWrap:'wrap', gap:'8px', position:'sticky', top:0, zIndex:30 },
   roomNavLeft:      { display:'flex', alignItems:'center', gap:'12px' },
-  roomBrand:        { fontSize:'16px', fontWeight:'700', color:'#0f172a' },
-  roomBadge:        { fontSize:'12px', padding:'4px 12px', borderRadius:'99px', fontWeight:'500' },
-  timerBox:         { fontSize:'22px', fontWeight:'700', padding:'8px 20px', borderRadius:'10px', fontVariantNumeric:'tabular-nums' },
-  progressWrap:     { display:'flex', alignItems:'center', gap:'10px', padding:'8px 16px', background:'#fff', borderBottom:'1px solid #f1f5f9' },
-  progressTrack:    { flex:1, height:'6px', background:'#e2e8f0', borderRadius:'99px', overflow:'hidden' },
-  progressFill:     { height:'6px', borderRadius:'99px', transition:'width 0.4s' },
-  progressLabel:    { fontSize:'12px', color:'#64748b', fontWeight:'500', minWidth:'60px', textAlign:'right' },
-  // roomGrid: base style — gridTemplateColumns is set dynamically above
-  roomGrid:         { display:'grid', gap:'16px', padding:'16px', flex:1, alignItems:'start' },
+  roomBrand:        { fontSize:'15px', fontWeight:'700', color:'#fff' },
+  roomBadge:        { fontSize:'11px', padding:'3px 10px', borderRadius:'99px', fontWeight:'500', border:'1px solid rgba(255,255,255,0.1)' },
+  timerBox:         { fontSize:'18px', fontWeight:'700', padding:'7px 16px', borderRadius:'10px', fontVariantNumeric:'tabular-nums', border:'1px solid rgba(255,255,255,0.08)' },
+  progressWrap:     { display:'flex', alignItems:'center', gap:'12px', padding:'8px 24px', background:'rgba(6,9,20,0.8)', borderBottom:'1px solid rgba(255,255,255,0.04)' },
+  progressTrack:    { flex:1, height:'4px', background:'rgba(255,255,255,0.08)', borderRadius:'99px', overflow:'hidden' },
+  progressFill:     { height:'4px', borderRadius:'99px', transition:'width 0.4s ease' },
+  progressLabel:    { fontSize:'11px', color:'rgba(255,255,255,0.35)', fontWeight:'600', minWidth:'55px', textAlign:'right' },
+  roomGrid:         { display:'grid', gap:'20px', padding:'20px 24px', flex:1, alignItems:'start' },
   roomLeft:         { display:'flex', flexDirection:'column', gap:'14px' },
   roomRight:        { display:'flex', flexDirection:'column', gap:'12px' },
-  qCard:            { background:'#fff', borderRadius:'12px', padding:'20px 24px', boxShadow:'0 1px 3px rgba(0,0,0,0.06)' },
-  qBadge:           { fontSize:'11px', fontWeight:'700', padding:'3px 12px', borderRadius:'99px', display:'inline-block', marginBottom:'10px', letterSpacing:'0.5px' },
-  qText:            { fontSize:'15px', fontWeight:'600', color:'#0f172a', margin:0, lineHeight:'1.6' },
-  textarea:         { width:'100%', padding:'12px', borderRadius:'10px', border:'1.5px solid #e2e8f0', fontSize:'14px', lineHeight:'1.6', resize:'vertical', boxSizing:'border-box', fontFamily:'inherit', background:'#fff', outline:'none' },
+  qCard:            { background:'rgba(17,24,39,0.9)', borderRadius:'14px', padding:'20px 24px', border:'1px solid rgba(255,255,255,0.07)', backdropFilter:'blur(12px)' },
+  qBadge:           { fontSize:'10px', fontWeight:'700', padding:'3px 10px', borderRadius:'99px', display:'inline-block', marginBottom:'10px', letterSpacing:'0.5px' },
+  qText:            { fontSize:'16px', fontWeight:'600', color:'#fff', margin:0, lineHeight:'1.65' },
+  textarea:         { width:'100%', padding:'14px 16px', borderRadius:'12px', border:'1px solid rgba(255,255,255,0.08)', fontSize:'14px', lineHeight:'1.7', resize:'vertical', boxSizing:'border-box', fontFamily:'inherit', background:'rgba(255,255,255,0.04)', outline:'none', color:'#fff', minHeight:'160px' },
   voiceRow:         { display:'flex', alignItems:'center', gap:'10px', flexWrap:'wrap' },
-  voiceBtn:         { padding:'10px 20px', color:'#fff', border:'none', borderRadius:'8px', fontSize:'13px', cursor:'pointer', fontWeight:'600' },
-  listeningPill:    { color:'#dc2626', fontSize:'13px', fontWeight:'600', background:'#fef2f2', padding:'6px 14px', borderRadius:'99px' },
-  charCount:        { marginLeft:'auto', fontSize:'11px', color:'#94a3b8' },
-  actionRow:        { display:'flex', justifyContent:'space-between', alignItems:'center' },
-  skipBtn:          { padding:'10px 20px', background:'#f1f5f9', color:'#475569', border:'none', borderRadius:'8px', fontSize:'13px', cursor:'pointer', fontWeight:'500' },
-  nextBtn:          { padding:'12px 28px', color:'#fff', border:'none', borderRadius:'10px', fontSize:'15px', fontWeight:'700', cursor:'pointer' },
-  camWrap:          { borderRadius:'14px', overflow:'hidden', position:'relative', background:'#0f172a' },
+  voiceBtn:         { padding:'9px 18px', color:'#fff', border:'none', borderRadius:'9px', fontSize:'13px', cursor:'pointer', fontWeight:'600' },
+  listeningPill:    { color:'#ef4444', fontSize:'12px', fontWeight:'600', background:'rgba(239,68,68,0.1)', padding:'5px 12px', borderRadius:'99px', border:'1px solid rgba(239,68,68,0.2)' },
+  charCount:        { marginLeft:'auto', fontSize:'11px', color:'rgba(255,255,255,0.25)' },
+  actionRow:        { display:'flex', justifyContent:'space-between', alignItems:'center', gap:'12px' },
+  skipBtn:          { padding:'10px 20px', background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.5)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:'9px', fontSize:'13px', cursor:'pointer', fontWeight:'500' },
+  nextBtn:          { padding:'11px 28px', color:'#fff', border:'none', borderRadius:'10px', fontSize:'14px', fontWeight:'700', cursor:'pointer' },
+  camWrap:          { borderRadius:'14px', overflow:'hidden', position:'relative', background:'#0a0f1e', border:'1px solid rgba(255,255,255,0.07)' },
   video:            { width:'100%', height:'100%', objectFit:'cover', display:'block', transform:'scaleX(-1)' },
   camOverlayTop:    { position:'absolute', top:'10px', left:'10px', right:'10px', display:'flex', justifyContent:'space-between' },
-  recPill:          { display:'flex', alignItems:'center', gap:'6px', background:'rgba(0,0,0,0.55)', color:'#fff', fontSize:'11px', fontWeight:'700', padding:'4px 10px', borderRadius:'99px', letterSpacing:'1px' },
-  recDot:           { width:'7px', height:'7px', borderRadius:'50%', background:'#ef4444', display:'inline-block', animation:'pulse 1.2s infinite' },
-  camOverlayBottom: { position:'absolute', bottom:0, left:0, right:0, color:'#fff', fontSize:'12px', fontWeight:'500', padding:'8px 14px', textAlign:'center' },
-  pillsWrap:        { background:'#fff', borderRadius:'12px', padding:'14px 16px' },
-  pillsLabel:       { fontSize:'11px', fontWeight:'600', color:'#94a3b8', margin:'0 0 10px', textTransform:'uppercase', letterSpacing:'0.5px' },
-  pillsRow:         { display:'flex', gap:'6px', flexWrap:'wrap', marginBottom:'10px' },
-  pill:             { width:'26px', height:'8px', borderRadius:'99px', transition:'all 0.3s' },
+  recPill:          { display:'flex', alignItems:'center', gap:'5px', background:'rgba(0,0,0,0.6)', color:'#fff', fontSize:'10px', fontWeight:'700', padding:'4px 10px', borderRadius:'99px', letterSpacing:'0.8px', backdropFilter:'blur(8px)' },
+  recDot:           { width:'6px', height:'6px', borderRadius:'50%', background:'#ef4444', display:'inline-block', animation:'pulse 1.2s infinite' },
+  camOverlayBottom: { position:'absolute', bottom:0, left:0, right:0, color:'#fff', fontSize:'11px', fontWeight:'500', padding:'8px 14px', textAlign:'center', background:'linear-gradient(transparent, rgba(0,0,0,0.6))' },
+  pillsWrap:        { background:'rgba(17,24,39,0.8)', borderRadius:'12px', padding:'14px 16px', border:'1px solid rgba(255,255,255,0.06)' },
+  pillsLabel:       { fontSize:'10px', fontWeight:'600', color:'rgba(255,255,255,0.28)', margin:'0 0 10px', textTransform:'uppercase', letterSpacing:'0.5px' },
+  pillsRow:         { display:'flex', gap:'5px', flexWrap:'wrap', marginBottom:'10px' },
+  pill:             { width:'24px', height:'6px', borderRadius:'99px', transition:'all 0.3s' },
   pillLegend:       { display:'flex', gap:'10px' },
-  legendItem:       { display:'flex', alignItems:'center', gap:'5px', fontSize:'11px', color:'#64748b' },
-  legendDot:        { width:'8px', height:'8px', borderRadius:'50%', display:'inline-block' },
-  tipsBox:          { background:'#fff', borderRadius:'12px', padding:'14px 16px', border:'1.5px solid' },
-  tipsTitle:        { fontSize:'12px', fontWeight:'700', margin:'0 0 8px', textTransform:'uppercase', letterSpacing:'0.5px' },
-  tipText:          { fontSize:'12px', color:'#64748b', margin:'0 0 6px', lineHeight:'1.5' },
-  roomFooter:       { textAlign:'center', padding:'14px', borderTop:'1px solid #e2e8f0', background:'#fff', fontSize:'12px', color:'#94a3b8' },
+  legendItem:       { display:'flex', alignItems:'center', gap:'5px', fontSize:'10px', color:'rgba(255,255,255,0.35)' },
+  legendDot:        { width:'7px', height:'7px', borderRadius:'50%', display:'inline-block' },
+  tipsBox:          { background:'rgba(17,24,39,0.8)', borderRadius:'12px', padding:'14px 16px', border:'1px solid rgba(255,255,255,0.06)' },
+  tipsTitle:        { fontSize:'11px', fontWeight:'700', margin:'0 0 8px', textTransform:'uppercase', letterSpacing:'0.5px', color:'rgba(255,255,255,0.5)' },
+  tipText:          { fontSize:'11px', color:'rgba(255,255,255,0.35)', margin:'0 0 5px', lineHeight:'1.5' },
+  roomFooter:       { textAlign:'center', padding:'12px', borderTop:'1px solid rgba(255,255,255,0.04)', background:'rgba(6,9,20,0.8)', fontSize:'11px', color:'rgba(255,255,255,0.15)' },
 };
- 
+
 const ps = {
   permGrid:    { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', width:'100%' },
-  permCard:    { borderRadius:'14px', padding:'20px 16px', display:'flex', flexDirection:'column', alignItems:'center', gap:'8px', background:'#fff', transition:'border 0.3s' },
+  permCard:    { borderRadius:'14px', padding:'20px 16px', display:'flex', flexDirection:'column', alignItems:'center', gap:'8px', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', transition:'border 0.3s' },
   permIcon:    { width:'48px', height:'48px', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px' },
-  permLabel:   { fontSize:'15px', fontWeight:'700', color:'#0f172a' },
-  permDesc:    { fontSize:'12px', color:'#64748b', textAlign:'center' },
-  permStatus:  { fontSize:'12px', fontWeight:'600', marginTop:'4px' },
-  deniedBox:   { width:'100%', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'12px', padding:'16px 20px', textAlign:'center' },
-  deniedTitle: { fontSize:'15px', fontWeight:'700', color:'#dc2626', margin:'0 0 6px' },
-  deniedText:  { fontSize:'13px', color:'#ef4444', margin:'0 0 14px', lineHeight:'1.6' },
+  permLabel:   { fontSize:'14px', fontWeight:'700', color:'#fff' },
+  permDesc:    { fontSize:'11px', color:'rgba(255,255,255,0.35)', textAlign:'center' },
+  permStatus:  { fontSize:'11px', fontWeight:'600', marginTop:'4px' },
+  deniedBox:   { width:'100%', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:'12px', padding:'16px 20px', textAlign:'center' },
+  deniedTitle: { fontSize:'14px', fontWeight:'700', color:'#ef4444', margin:'0 0 6px' },
+  deniedText:  { fontSize:'12px', color:'rgba(239,68,68,0.7)', margin:'0 0 14px', lineHeight:'1.6' },
 };
