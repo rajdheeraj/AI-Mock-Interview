@@ -6,23 +6,15 @@ export function AnimatedCounter({ to, duration = 1500, suffix = '' }) {
 
   useEffect(() => {
     if (to === 0) { setCount(0); return; }
-
     const start = performance.now();
-
     const animate = (now) => {
       const progress = Math.min((now - start) / duration, 1);
       const ease = 1 - Math.pow(1 - progress, 3);
       setCount(Math.round(ease * to));
-      if (progress < 1) {
-        raf.current = requestAnimationFrame(animate);
-      }
+      if (progress < 1) raf.current = requestAnimationFrame(animate);
     };
-
     raf.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (raf.current) cancelAnimationFrame(raf.current);
-    };
+    return () => { if (raf.current) cancelAnimationFrame(raf.current); };
   }, [to, duration]);
 
   return <>{count}{suffix}</>;
