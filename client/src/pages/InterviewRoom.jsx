@@ -56,6 +56,7 @@ export default function InterviewRoom() {
   useEffect(() => {
     if (permissionStatus !== 'granted') return;
     setLoadingQ(true);
+
     generateQuestions({
       role:     interview?.role     || 'Software Engineer',
       company:  interview?.company  || 'General',
@@ -166,14 +167,11 @@ export default function InterviewRoom() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { toast.error('Voice not supported. Please type.'); return; }
     window.speechSynthesis.cancel();
-
     const r = new SR();
     r.continuous     = true;
     r.interimResults = true;
     r.lang           = 'en-US';
-
     let finalTranscript = '';
-
     r.onresult = (e) => {
       let interim = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -186,15 +184,12 @@ export default function InterviewRoom() {
       }
       setCurrent(finalTranscript + interim);
     };
-
     r.onerror = (err) => {
       console.error('Speech error:', err.error);
       setListening(false);
       toast.error('Voice error. Try typing.');
     };
-
     r.onend = () => { setListening(false); };
-
     recognitionRef.current = r;
     r.start();
     setListening(true);
@@ -240,7 +235,6 @@ export default function InterviewRoom() {
     stopListening();
     clearTimeout(timerRef.current);
     setSubmitting(true);
-
     try {
       const { data: evaluation } = await evaluateAnswers({
         role:     interview?.role     || 'Software Engineer',
@@ -248,7 +242,6 @@ export default function InterviewRoom() {
         category: interview?.category || 'General',
         answers:  finalAnswers,
       });
-
       const scoredAnswers = finalAnswers.map((a, i) => ({
         ...a,
         score:       evaluation.answers[i]?.score       ?? 50,
@@ -257,7 +250,6 @@ export default function InterviewRoom() {
         improvement: evaluation.answers[i]?.improvement ?? '',
         idealAnswer: evaluation.answers[i]?.idealAnswer ?? '',
       }));
-
       const { data } = await saveAttempt({
         company:          interview?.company  || 'General',
         role:             interview?.role     || 'Software Engineer',
@@ -270,7 +262,6 @@ export default function InterviewRoom() {
         weakerSections:   evaluation.weakerSections   || [],
         improvementAreas: evaluation.improvementAreas || [],
       });
-
       toast.success('AI evaluation complete!');
       navigate(`/results/${data._id}`, { state: { attempt: data, evaluation } });
     } catch {
@@ -325,7 +316,6 @@ export default function InterviewRoom() {
               </span>
               <h1 style={gs.cardTitle}>{interview?.role}</h1>
               <p style={gs.cardSub}>@ {interview?.company}</p>
-
               <div style={gs.permGrid}>
                 {[
                   { icon: '📹', label: 'Camera',     desc: 'Required for live monitoring' },
@@ -359,7 +349,6 @@ export default function InterviewRoom() {
                   </div>
                 ))}
               </div>
-
               <div style={{ ...gs.infoBox, background: theme.bg, border: `1px solid ${theme.light}` }}>
                 <p style={{ ...gs.infoTitle, color: theme.color }}>Why we need access</p>
                 {[
@@ -369,7 +358,6 @@ export default function InterviewRoom() {
                   '💡  You can still type answers if you prefer',
                 ].map(tip => <div key={tip} style={gs.infoRow}>{tip}</div>)}
               </div>
-
               {permissionStatus === 'denied' ? (
                 <div style={gs.deniedBox}>
                   <p style={gs.deniedTitle}>⚠️ Permission denied</p>
@@ -448,7 +436,6 @@ export default function InterviewRoom() {
               </span>
               <h1 style={gs.cardTitle}>{interview.role}</h1>
               <p style={gs.cardSub}>@ {interview.company}</p>
-
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '10px', width: '100%' }}>
                 {[
                   { icon: '❓', label: 'Questions',    val: questions.length    },
@@ -463,7 +450,6 @@ export default function InterviewRoom() {
                   </div>
                 ))}
               </div>
-
               <div style={{ ...gs.infoBox, background: theme.bg, border: `1px solid ${theme.light}` }}>
                 <p style={{ ...gs.infoTitle, color: theme.color }}>Before you begin</p>
                 {[
@@ -475,7 +461,6 @@ export default function InterviewRoom() {
                   '💾  Results are saved to your profile',
                 ].map(tip => <div key={tip} style={gs.infoRow}>{tip}</div>)}
               </div>
-
               <button
                 style={{ ...gs.primaryBtn, background: theme.color }}
                 onClick={() => setStarted(true)}
@@ -499,39 +484,42 @@ export default function InterviewRoom() {
 
   return (
     <div style={rs.page}>
-
       {/* ── STICKY NAV ── */}
       <div style={{ ...rs.nav, borderBottom: `2px solid ${theme.color}33` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={rs.brand}>🎯 MockPrep</span>
-          <span style={{ ...rs.navBadge, color: theme.color, background: theme.bg }}>
-            {interview.company} · {interview.role}
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button
-            style={{
-              ...rs.muteBtn,
-              background: muted ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)',
-              color:      muted ? '#ef4444'               : '#22c55e',
-              border:     muted ? '1px solid rgba(239,68,68,0.25)' : '1px solid rgba(34,197,94,0.25)',
-            }}
-            onClick={() => { if (!muted) window.speechSynthesis.cancel(); setMuted(m => !m); }}
-          >
-            {muted ? '🔇 Muted' : '🔊 AI Voice'}
-          </button>
-          <div style={{ ...rs.timerChip, color: timerColor, border: `1px solid ${timerColor}33`, background: `${timerColor}12` }}>
-            ⏱ {timerMins}:{timerSecs}
+        <div style={rs.navInner}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={rs.brand}>🎯 MockPrep</span>
+            <span style={{ ...rs.navBadge, color: theme.color, background: theme.bg }}>
+              {interview.company} · {interview.role}
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              style={{
+                ...rs.muteBtn,
+                background: muted ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)',
+                color:      muted ? '#ef4444'               : '#22c55e',
+                border:     muted ? '1px solid rgba(239,68,68,0.25)' : '1px solid rgba(34,197,94,0.25)',
+              }}
+              onClick={() => { if (!muted) window.speechSynthesis.cancel(); setMuted(m => !m); }}
+            >
+              {muted ? '🔇 Muted' : '🔊 AI Voice'}
+            </button>
+            <div style={{ ...rs.timerChip, color: timerColor, border: `1px solid ${timerColor}33`, background: `${timerColor}12` }}>
+              ⏱ {timerMins}:{timerSecs}
+            </div>
           </div>
         </div>
       </div>
 
       {/* ── PROGRESS BAR ── */}
       <div style={rs.progressBar}>
-        <div style={rs.progressTrack}>
-          <div style={{ ...rs.progressFill, width: `${progress}%`, background: theme.color }} />
+        <div style={rs.progressBarInner}>
+          <div style={rs.progressTrack}>
+            <div style={{ ...rs.progressFill, width: `${progress}%`, background: theme.color }} />
+          </div>
+          <span style={rs.progressLabel}>Q{step + 1} / {questions.length}</span>
         </div>
-        <span style={rs.progressLabel}>Q{step + 1} / {questions.length}</span>
       </div>
 
       {/* ── MAIN GRID ── */}
@@ -539,7 +527,6 @@ export default function InterviewRoom() {
 
         {/* ── LEFT PANEL ── */}
         <div style={rs.leftPanel}>
-
           {/* Question card */}
           <div style={{ ...rs.qCard, borderLeft: `3px solid ${theme.color}` }}>
             <span style={{ ...rs.qBadge, color: theme.color, background: theme.bg }}>
@@ -606,7 +593,6 @@ export default function InterviewRoom() {
 
         {/* ── RIGHT PANEL ── */}
         <div style={rs.rightPanel}>
-
           {/* Camera */}
           <div style={{ ...rs.camWrap, aspectRatio: isDesktop ? '4/3' : '16/9' }}>
             <video ref={videoRef} autoPlay muted playsInline style={rs.video} />
@@ -680,7 +666,6 @@ export default function InterviewRoom() {
               <p key={tip} style={rs.tipText}>{tip}</p>
             ))}
           </div>
-
         </div>
       </div>
 
@@ -752,16 +737,18 @@ const gs = {
 // ── ROOM STYLES ───────────────────────────────────────────────────────
 const rs = {
   page:          { minHeight: '100vh', background: '#060914', display: 'flex', flexDirection: 'column', fontFamily: 'Inter, -apple-system, sans-serif', color: '#fff' },
-  nav:           { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px', background: 'rgba(6,9,20,0.97)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'sticky', top: 0, zIndex: 40, flexWrap: 'wrap', gap: '8px' },
+  nav:           { display: 'flex', background: 'rgba(6,9,20,0.97)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'sticky', top: 0, zIndex: 40 },
+  navInner:      { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px', flexWrap: 'wrap', gap: '8px', maxWidth: '1280px', width: '100%', margin: '0 auto', boxSizing: 'border-box' },
   brand:         { fontSize: '15px', fontWeight: '700', color: '#fff' },
   navBadge:      { fontSize: '11px', padding: '3px 10px', borderRadius: '99px', fontWeight: '500', border: '1px solid rgba(255,255,255,0.08)' },
   muteBtn:       { padding: '7px 14px', border: 'none', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', fontWeight: '600' },
   timerChip:     { fontSize: '16px', fontWeight: '700', padding: '6px 14px', borderRadius: '10px', fontVariantNumeric: 'tabular-nums' },
-  progressBar:   { display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 20px', background: 'rgba(6,9,20,0.8)', borderBottom: '1px solid rgba(255,255,255,0.04)' },
+  progressBar:   { background: 'rgba(6,9,20,0.8)', borderBottom: '1px solid rgba(255,255,255,0.04)' },
+  progressBarInner: { display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 20px', maxWidth: '1280px', width: '100%', margin: '0 auto', boxSizing: 'border-box' },
   progressTrack: { flex: 1, height: '3px', background: 'rgba(255,255,255,0.07)', borderRadius: '99px', overflow: 'hidden' },
   progressFill:  { height: '3px', borderRadius: '99px', transition: 'width 0.5s ease' },
   progressLabel: { fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontWeight: '600', minWidth: '52px', textAlign: 'right' },
-  grid:          { display: 'grid', gap: '16px', padding: '16px 20px', flex: 1, alignItems: 'start' },
+  grid:          { display: 'grid', gap: '16px', padding: '16px 20px', flex: 1, alignItems: 'start', maxWidth: '1280px', width: '100%', margin: '0 auto', boxSizing: 'border-box' },
   leftPanel:     { display: 'flex', flexDirection: 'column', gap: '12px' },
   rightPanel:    { display: 'flex', flexDirection: 'column', gap: '12px' },
   qCard:         { background: 'rgba(17,24,39,0.9)', borderRadius: '14px', padding: '18px 20px', border: '1px solid rgba(255,255,255,0.07)' },

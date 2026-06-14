@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Brain, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { loginUser } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -29,134 +27,148 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-950 text-white flex">
+    <div style={{ minHeight:'100vh', display:'flex', background:'#0a0f1e', color:'#fff', fontFamily:'Inter, sans-serif' }}>
 
-      {/* Left — branding */}
-      <div className="hidden lg:flex flex-col justify-between w-[45%] bg-gradient-to-br from-surface-900 to-surface-950 border-r border-white/5 p-12 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-cyan-500/8 rounded-full blur-3xl" />
-          <div className="absolute inset-0 bg-hero-pattern opacity-30" />
+      {/* Left panel — branding */}
+      <div style={{
+        display:'none', flex:1, flexDirection:'column', justifyContent:'space-between',
+        padding:'48px', position:'relative', overflow:'hidden',
+        background:'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.04))',
+        borderRight:'1px solid rgba(255,255,255,0.06)',
+      }} className="auth-left">
+        <div style={{ position:'absolute', top:'20%', left:'10%', width:260, height:260, background:'radial-gradient(circle,rgba(99,102,241,0.15),transparent)', borderRadius:'50%' }} />
+        <div style={{ position:'absolute', bottom:'10%', right:'15%', width:220, height:220, background:'radial-gradient(circle,rgba(6,182,212,0.1),transparent)', borderRadius:'50%' }} />
+
+        <div style={{ display:'flex', alignItems:'center', gap:10, position:'relative', zIndex:1 }}>
+          <div style={{ width:36, height:36, borderRadius:10, background:'linear-gradient(135deg,#6366f1,#8b5cf6)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, boxShadow:'0 0 20px rgba(99,102,241,0.4)' }}>🧠</div>
+          <span style={{ fontSize:20, fontWeight:800 }}>MockPrep</span>
         </div>
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
-            <Brain className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-bold">MockPrep</span>
-        </div>
-        <div className="relative z-10">
-          <h2 className="text-4xl font-black leading-tight mb-4">
+
+        <div style={{ position:'relative', zIndex:1 }}>
+          <h2 style={{ fontSize:36, fontWeight:900, lineHeight:1.2, margin:'0 0 16px' }}>
             Welcome back.<br />
-            <span className="gradient-text">Keep practicing.</span>
+            <span style={{ background:'linear-gradient(135deg,#6366f1,#8b5cf6)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
+              Keep practicing.
+            </span>
           </h2>
-          <p className="text-white/40 text-lg mb-8">
+          <p style={{ fontSize:15, color:'rgba(255,255,255,0.4)', marginBottom:28 }}>
             Your next opportunity is closer than you think.
           </p>
-          <div className="grid grid-cols-2 gap-4">
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
             {[
-              { val:'8+',   label:'Companies'     },
-              { val:'AI',   label:'Evaluation'    },
-              { val:'Free', label:'Forever'       },
-              { val:'📱',   label:'Mobile Ready'  },
+              { val:'8+',   label:'Companies'    },
+              { val:'AI',   label:'Evaluation'   },
+              { val:'Free', label:'Forever'      },
+              { val:'📱',   label:'Mobile Ready' },
             ].map(({ val, label }) => (
-              <div key={label} className="glass rounded-xl p-4 text-center">
-                <div className="text-2xl font-black text-blue-400">{val}</div>
-                <div className="text-xs text-white/30 mt-1">{label}</div>
+              <div key={label} style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:14, padding:'16px', textAlign:'center' }}>
+                <div style={{ fontSize:22, fontWeight:900, color:'#a5b4fc' }}>{val}</div>
+                <div style={{ fontSize:11, color:'rgba(255,255,255,0.3)', marginTop:4 }}>{label}</div>
               </div>
             ))}
           </div>
         </div>
-        <div className="relative z-10 text-xs text-white/20">
+
+        <div style={{ fontSize:11, color:'rgba(255,255,255,0.15)', position:'relative', zIndex:1 }}>
           © {new Date().getFullYear()} MockPrep by Dheeraj Kumar
         </div>
       </div>
 
-      {/* Right — form */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-sm"
-        >
-          {/* Mobile brand */}
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Brain className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-lg font-bold">MockPrep</span>
+      {/* Right panel — form */}
+      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px' }}>
+        <div style={{ width:'100%', maxWidth:380 }}>
+
+          <div className="auth-mobile-brand" style={{ display:'flex', alignItems:'center', gap:10, marginBottom:32 }}>
+            <div style={{ width:32, height:32, borderRadius:9, background:'linear-gradient(135deg,#6366f1,#8b5cf6)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>🧠</div>
+            <span style={{ fontSize:18, fontWeight:800 }}>MockPrep</span>
           </div>
 
-          <div className="mb-8">
-            <h1 className="text-2xl font-black mb-1">Sign in</h1>
-            <p className="text-sm text-white/40">Continue your interview preparation</p>
-          </div>
+          <h1 style={{ fontSize:26, fontWeight:900, margin:'0 0 6px' }}>Sign in</h1>
+          <p style={{ fontSize:13, color:'rgba(255,255,255,0.35)', marginBottom:28 }}>
+            Continue your interview preparation
+          </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:16 }}>
             <div>
-              <label className="text-xs font-medium text-white/50 block mb-1.5">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                <input
-                  className="input-field pl-10"
-                  type="email" placeholder="you@example.com"
-                  value={form.email}
-                  onChange={e => setForm({...form, email: e.target.value})}
-                  required
-                />
-              </div>
+              <label style={{ fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.45)', display:'block', marginBottom:6 }}>Email</label>
+              <input
+                style={inputStyle}
+                type="email"
+                placeholder="you@example.com"
+                value={form.email}
+                onChange={e => setForm({...form, email: e.target.value})}
+                required
+              />
             </div>
 
             <div>
-              <label className="text-xs font-medium text-white/50 block mb-1.5">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+              <label style={{ fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.45)', display:'block', marginBottom:6 }}>Password</label>
+              <div style={{ position:'relative' }}>
                 <input
-                  className="input-field pl-10 pr-10"
-                  type={showPwd ? 'text' : 'password'} placeholder="Your password"
+                  style={{ ...inputStyle, paddingRight:42 }}
+                  type={showPwd ? 'text' : 'password'}
+                  placeholder="Your password"
                   value={form.password}
                   onChange={e => setForm({...form, password: e.target.value})}
                   required
                 />
-                <button type="button" onClick={() => setShowPwd(s => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50 transition-colors">
-                  {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(s => !s)}
+                  style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'rgba(255,255,255,0.25)', cursor:'pointer', fontSize:14, padding:0 }}
+                >
+                  {showPwd ? '🙈' : '👁️'}
                 </button>
               </div>
             </div>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
+            <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full justify-center py-3 mt-2"
+              style={{
+                width:'100%', padding:'13px', borderRadius:12, fontSize:14, fontWeight:700,
+                color:'#fff', border:'none', cursor: loading ? 'not-allowed' : 'pointer',
+                background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
+                boxShadow:'0 0 24px rgba(99,102,241,0.3)', marginTop:4,
+                opacity: loading ? 0.7 : 1,
+              }}
             >
-              {loading ? (
-                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-              ) : <>Sign In <ArrowRight className="w-4 h-4" /></>}
-            </motion.button>
+              {loading ? 'Signing in...' : 'Sign In →'}
+            </button>
           </form>
 
-          <p className="text-center text-sm text-white/30 mt-6">
+          <p style={{ textAlign:'center', fontSize:13, color:'rgba(255,255,255,0.3)', marginTop:24 }}>
             No account?{' '}
-            <Link to="/register" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+            <Link to="/register" style={{ color:'#a5b4fc', fontWeight:600, textDecoration:'none' }}>
               Create one free
             </Link>
           </p>
 
-          <div className="mt-8 pt-6 border-t border-white/5">
-            <p className="text-center text-xs text-white/20 mb-3">Trusted for</p>
-            <div className="flex justify-center gap-2 flex-wrap">
+          <div style={{ marginTop:32, paddingTop:20, borderTop:'1px solid rgba(255,255,255,0.05)' }}>
+            <p style={{ textAlign:'center', fontSize:11, color:'rgba(255,255,255,0.2)', marginBottom:10 }}>Trusted for</p>
+            <div style={{ display:'flex', justifyContent:'center', gap:8, flexWrap:'wrap' }}>
               {['TCS','Wipro','Infosys','Deloitte'].map(co => (
-                <span key={co} className="glass px-3 py-1 rounded-md text-xs text-white/30">{co}</span>
+                <span key={co} style={{ fontSize:11, padding:'3px 10px', borderRadius:8, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.3)' }}>
+                  {co}
+                </span>
               ))}
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
+
+      <style>{`
+        @media (min-width: 1024px) {
+          .auth-left { display: flex !important; }
+          .auth-mobile-brand { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 }
+
+const inputStyle = {
+  width:'100%', padding:'11px 14px', borderRadius:11, fontSize:13,
+  background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
+  color:'#fff', outline:'none', boxSizing:'border-box', fontFamily:'inherit',
+};

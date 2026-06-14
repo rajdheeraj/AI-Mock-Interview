@@ -5,9 +5,9 @@ import { registerUser } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function RegisterPage() {
-  const [form, setForm]     = useState({ name:'', email:'', password:'' });
+  const [form, setForm]       = useState({ name:'', email:'', password:'' });
   const [loading, setLoading] = useState(false);
-  const [focused, setFocused] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
   const { login } = useAuth();
   const navigate  = useNavigate();
 
@@ -26,144 +26,161 @@ export default function RegisterPage() {
     }
   };
 
-  const inputStyle = (name) => ({
-    width:'100%', padding:'12px 16px', borderRadius:'10px',
-    border: focused === name ? '2px solid #3b82f6' : '2px solid #e2e8f0',
-    fontSize:'14px', boxSizing:'border-box', outline:'none',
-    background: focused === name ? '#fff' : '#f8fafc',
-    transition:'all 0.2s', color:'#0f172a',
-  });
-
   return (
-    <div style={s.page}>
-      {/* Left panel */}
-      <div style={s.left}>
-        <div style={s.leftInner}>
-          <div style={s.brand}>🎯 MockPrep</div>
-          <h2 style={s.leftTitle}>Prepare smarter.<br/>Get hired faster.</h2>
-          <p style={s.leftSub}>
-            Practice AI-powered mock interviews for top companies like TCS, Wipro, Deloitte and more.
+    <div style={{ minHeight:'100vh', display:'flex', background:'#0a0f1e', color:'#fff', fontFamily:'Inter, sans-serif' }}>
+
+      {/* Left panel — branding */}
+      <div style={{
+        display:'none', flex:1, flexDirection:'column', justifyContent:'space-between',
+        padding:'48px', position:'relative', overflow:'hidden',
+        background:'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.04))',
+        borderRight:'1px solid rgba(255,255,255,0.06)',
+      }} className="auth-left">
+        <div style={{ position:'absolute', top:'10%', left:'15%', width:280, height:280, background:'radial-gradient(circle,rgba(99,102,241,0.15),transparent)', borderRadius:'50%' }} />
+        <div style={{ position:'absolute', bottom:'15%', right:'10%', width:220, height:220, background:'radial-gradient(circle,rgba(139,92,246,0.12),transparent)', borderRadius:'50%' }} />
+
+        <div style={{ display:'flex', alignItems:'center', gap:10, position:'relative', zIndex:1 }}>
+          <div style={{ width:36, height:36, borderRadius:10, background:'linear-gradient(135deg,#6366f1,#8b5cf6)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, boxShadow:'0 0 20px rgba(99,102,241,0.4)' }}>🧠</div>
+          <span style={{ fontSize:20, fontWeight:800 }}>MockPrep</span>
+        </div>
+
+        <div style={{ position:'relative', zIndex:1 }}>
+          <h2 style={{ fontSize:36, fontWeight:900, lineHeight:1.2, margin:'0 0 16px' }}>
+            Start your<br />
+            <span style={{ background:'linear-gradient(135deg,#6366f1,#8b5cf6)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
+              interview journey.
+            </span>
+          </h2>
+          <p style={{ fontSize:15, color:'rgba(255,255,255,0.4)', marginBottom:28 }}>
+            Join freshers who practice smarter and land their dream jobs.
           </p>
-          <div style={s.featureList}>
+          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
             {[
-              ['🎤', 'Voice-powered answers'],
-              ['📹', 'Live camera monitoring'],
-              ['📊', 'AI scoring & feedback'],
-              ['🏢', '8+ company simulations'],
-            ].map(([icon, text]) => (
-              <div key={text} style={s.featureItem}>
-                <span style={s.featureIcon}>{icon}</span>
-                <span style={s.featureText}>{text}</span>
+              'AI-generated role-specific questions',
+              'Voice recognition for natural answers',
+              'Detailed feedback with improvement areas',
+              'Works great on mobile and desktop',
+            ].map(f => (
+              <div key={f} style={{ display:'flex', alignItems:'center', gap:10, fontSize:13, color:'rgba(255,255,255,0.55)' }}>
+                <span style={{ width:18, height:18, borderRadius:'50%', background:'rgba(34,197,94,0.15)', color:'#22c55e', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, flexShrink:0 }}>✓</span>
+                {f}
               </div>
             ))}
           </div>
         </div>
+
+        <div style={{ fontSize:11, color:'rgba(255,255,255,0.15)', position:'relative', zIndex:1 }}>
+          © {new Date().getFullYear()} MockPrep by Dheeraj Kumar
+        </div>
       </div>
 
-      {/* Right panel */}
-      <div style={s.right}>
-        <div style={s.card}>
-          <div style={s.cardTop}>
-            <h1 style={s.title}>Create your account</h1>
-            <p style={s.subtitle}>Start your interview preparation today</p>
+      {/* Right panel — form */}
+      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px' }}>
+        <div style={{ width:'100%', maxWidth:380 }}>
+
+          {/* Mobile brand */}
+          <div className="auth-mobile-brand" style={{ display:'flex', alignItems:'center', gap:10, marginBottom:32 }}>
+            <div style={{ width:32, height:32, borderRadius:9, background:'linear-gradient(135deg,#6366f1,#8b5cf6)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>🧠</div>
+            <span style={{ fontSize:18, fontWeight:800 }}>MockPrep</span>
           </div>
 
-          <form onSubmit={handleSubmit} style={s.form}>
-            <div style={s.field}>
-              <label style={s.label}>Full name</label>
+          <h1 style={{ fontSize:26, fontWeight:900, margin:'0 0 6px' }}>Create account</h1>
+          <p style={{ fontSize:13, color:'rgba(255,255,255,0.35)', marginBottom:28 }}>
+            Free forever. No credit card needed.
+          </p>
+
+          <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:16 }}>
+            <div>
+              <label style={{ fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.45)', display:'block', marginBottom:6 }}>Full name</label>
               <input
-                style={inputStyle('name')}
+                style={inputStyle}
                 placeholder="Dheeraj Kumar"
                 value={form.name}
                 onChange={e => setForm({...form, name: e.target.value})}
-                onFocus={() => setFocused('name')}
-                onBlur={() => setFocused('')}
                 required
               />
             </div>
-            <div style={s.field}>
-              <label style={s.label}>Email address</label>
+
+            <div>
+              <label style={{ fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.45)', display:'block', marginBottom:6 }}>Email</label>
               <input
-                style={inputStyle('email')}
+                style={inputStyle}
                 type="email"
                 placeholder="you@example.com"
                 value={form.email}
                 onChange={e => setForm({...form, email: e.target.value})}
-                onFocus={() => setFocused('email')}
-                onBlur={() => setFocused('')}
-                required
-              />
-            </div>
-            <div style={s.field}>
-              <label style={s.label}>Password</label>
-              <input
-                style={inputStyle('password')}
-                type="password"
-                placeholder="Min. 6 characters"
-                value={form.password}
-                onChange={e => setForm({...form, password: e.target.value})}
-                onFocus={() => setFocused('password')}
-                onBlur={() => setFocused('')}
                 required
               />
             </div>
 
+            <div>
+              <label style={{ fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.45)', display:'block', marginBottom:6 }}>Password</label>
+              <div style={{ position:'relative' }}>
+                <input
+                  style={{ ...inputStyle, paddingRight:42 }}
+                  type={showPwd ? 'text' : 'password'}
+                  placeholder="Min. 6 characters"
+                  value={form.password}
+                  onChange={e => setForm({...form, password: e.target.value})}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(s => !s)}
+                  style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'rgba(255,255,255,0.25)', cursor:'pointer', fontSize:14, padding:0 }}
+                >
+                  {showPwd ? '🙈' : '👁️'}
+                </button>
+              </div>
+            </div>
+
             <button
-              style={{ ...s.btn, opacity: loading ? 0.7 : 1 }}
+              type="submit"
               disabled={loading}
-              onMouseEnter={e => e.target.style.background='#1d4ed8'}
-              onMouseLeave={e => e.target.style.background='#3b82f6'}
+              style={{
+                width:'100%', padding:'13px', borderRadius:12, fontSize:14, fontWeight:700,
+                color:'#fff', border:'none', cursor: loading ? 'not-allowed' : 'pointer',
+                background:'linear-gradient(135deg,#6366f1,#8b5cf6)',
+                boxShadow:'0 0 24px rgba(99,102,241,0.3)', marginTop:4,
+                opacity: loading ? 0.7 : 1,
+              }}
             >
               {loading ? 'Creating account...' : 'Create Account →'}
             </button>
           </form>
 
-          <p style={s.switchText}>
+          <p style={{ textAlign:'center', fontSize:13, color:'rgba(255,255,255,0.3)', marginTop:24 }}>
             Already have an account?{' '}
-            <Link to="/login" style={s.link}>Sign in here</Link>
+            <Link to="/login" style={{ color:'#a5b4fc', fontWeight:600, textDecoration:'none' }}>
+              Sign in
+            </Link>
           </p>
 
-          <div style={s.divider}><span style={s.dividerText}>Trusted by students across India</span></div>
-          <div style={s.companies}>
-            {['TCS','Wipro','Infosys','Deloitte','HCL'].map(c => (
-              <span key={c} style={s.companyChip}>{c}</span>
-            ))}
+          <div style={{ marginTop:32, paddingTop:20, borderTop:'1px solid rgba(255,255,255,0.05)' }}>
+            <p style={{ textAlign:'center', fontSize:11, color:'rgba(255,255,255,0.2)', marginBottom:10 }}>Trusted for</p>
+            <div style={{ display:'flex', justifyContent:'center', gap:8, flexWrap:'wrap' }}>
+              {['TCS','Wipro','Infosys','Deloitte'].map(co => (
+                <span key={co} style={{ fontSize:11, padding:'3px 10px', borderRadius:8, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.3)' }}>
+                  {co}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
-
-        <footer style={s.footer}>
-          © {new Date().getFullYear()} MockPrep · All rights reserved to <strong>Dheeraj Kumar</strong>
-        </footer>
       </div>
+
+      <style>{`
+        @media (min-width: 1024px) {
+          .auth-left { display: flex !important; }
+          .auth-mobile-brand { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 }
 
-const s = {
-  page:        { display:'flex', flexDirection:'column', minHeight:'100vh', fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' },
-  left:        { display:'none' },  // hide left panel on mobile
-  leftInner:   { maxWidth:'360px' },
-  brand:       { fontSize:'22px', fontWeight:'800', color:'#fff', marginBottom:'40px' },
-  leftTitle:   { fontSize:'32px', fontWeight:'800', color:'#fff', lineHeight:'1.3', margin:'0 0 16px' },
-  leftSub:     { fontSize:'15px', color:'#bfdbfe', lineHeight:'1.7', margin:'0 0 32px' },
-  featureList: { display:'flex', flexDirection:'column', gap:'14px' },
-  featureItem: { display:'flex', alignItems:'center', gap:'12px' },
-  featureIcon: { width:'36px', height:'36px', background:'rgba(255,255,255,0.15)', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'16px' },
-  featureText: { color:'#e0f2fe', fontSize:'14px', fontWeight:'500' },
-  right:       { flex:1, background:'#f8fafc', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px 16px' },
-  card:        { background:'#fff', borderRadius:'16px', padding:'28px 20px', width:'100%', maxWidth:'420px', boxShadow:'0 4px 24px rgba(0,0,0,0.08)' },
-  cardTop:     { marginBottom:'28px' },
-  title:       { fontSize:'24px', fontWeight:'800', color:'#0f172a', margin:'0 0 6px' },
-  subtitle:    { fontSize:'14px', color:'#64748b', margin:0 },
-  form:        { display:'flex', flexDirection:'column', gap:'16px' },
-  field:       { display:'flex', flexDirection:'column', gap:'6px' },
-  label:       { fontSize:'13px', fontWeight:'600', color:'#374151' },
-  btn:         { padding:'13px', background:'#3b82f6', color:'#fff', border:'none', borderRadius:'10px', fontSize:'15px', fontWeight:'700', cursor:'pointer', transition:'background 0.2s', marginTop:'4px' },
-  switchText:  { textAlign:'center', fontSize:'13px', color:'#64748b', marginTop:'20px' },
-  link:        { color:'#3b82f6', fontWeight:'600', textDecoration:'none' },
-  divider:     { textAlign:'center', borderTop:'1px solid #f1f5f9', paddingTop:'16px', marginTop:'20px' },
-  dividerText: { fontSize:'11px', color:'#94a3b8' },
-  companies:   { display:'flex', flexWrap:'wrap', gap:'6px', justifyContent:'center', marginTop:'10px' },
-  companyChip: { padding:'3px 10px', background:'#f1f5f9', color:'#475569', borderRadius:'99px', fontSize:'11px', fontWeight:'500' },
-  footer:      { marginTop:'20px', fontSize:'12px', color:'#94a3b8', textAlign:'center' },
+const inputStyle = {
+  width:'100%', padding:'11px 14px', borderRadius:11, fontSize:13,
+  background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
+  color:'#fff', outline:'none', boxSizing:'border-box', fontFamily:'inherit',
 };
