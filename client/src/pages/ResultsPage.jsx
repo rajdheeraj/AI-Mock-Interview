@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, ArrowLeft, ChevronDown, CheckCircle,
          AlertTriangle, Lightbulb, RotateCcw, TrendingUp } from 'lucide-react';
-import { ScoreRing } from '../components/ui/ScoreRing';
+
 
 const fadeUp = {
   hidden: { opacity:0, y:16 },
@@ -35,9 +35,7 @@ export default function ResultsPage() {
     D:'text-orange-400',  F:'text-red-400'
   }[attempt.grade] || 'text-white';
 
-  const gradeLabel = {
-    A:'Excellent',B:'Good',C:'Average',D:'Below Average',F:'Needs Work'
-  }[attempt.grade] || '';
+  
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white font-sans">
