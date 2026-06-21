@@ -265,8 +265,9 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Content */}
-        <div style={{ flex:1, padding:'18px 20px', maxWidth:1600, width:'100%', margin:'0 auto', boxSizing:'border-box' }}>
+        /* Content *
+        <div style={{ flex:1, padding:'24px 32px', maxWidth:1280, width:'100%', margin:'0 auto', boxSizing:'border-box' }}>
+        
           <AnimatePresence mode="wait">
 
             {/* ── DASHBOARD ── */}
