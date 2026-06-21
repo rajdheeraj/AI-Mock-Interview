@@ -130,7 +130,7 @@ export default function InterviewRoom() {
     }
     setTimeout(() => {
       speak(
-        `Welcome to your ${interview?.role} interview at ${interview?.company}. Here is your first question. ${questions[0]}`
+        `Welcome to your ${interview?.role} interview at ${interview?.company}. Here is your first question. ${questions[0]}. Now click Start Voice to answer, or type your answer in the box below.`
       );
     }, 800);
     return () => {
@@ -154,9 +154,9 @@ export default function InterviewRoom() {
     setTimeLeft(TIMER_SECONDS);
     setCurrent('');
     stopListening();
-    if (started && step > 0 && questions.length > 0) {
+  if (started && step > 0 && questions.length > 0) {
       setTimeout(() => {
-        speak(`Question ${step + 1}. ${questions[step]}`);
+        speak(`Question ${step + 1}. ${questions[step]}. Now click Start Voice to answer, or type your answer in the box below.`);
       }, 400);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
