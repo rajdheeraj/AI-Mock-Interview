@@ -337,8 +337,6 @@ overflow: 'hidden',
       >
         ✨ AI-Powered Platform
       </div>
-
-```
   <h2
     style={{
       fontSize: 24,
