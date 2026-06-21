@@ -213,7 +213,7 @@ export default function InterviewRoom() {
   // ── NEXT ─────────────────────────────────────────────────────────
   const handleNext = () => {
     if (!current.trim()) {
-      toast.error('Please give an answer before moving on.');
+      toast.error('Please give an answer or click Skip to move on.');
       return;
     }
     const saved = [
