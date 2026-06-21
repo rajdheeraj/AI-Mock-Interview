@@ -465,38 +465,7 @@ overflow: 'hidden',
 </motion.div>
 
 
-                {/* Stats — only if attempts exist */}
-                {attempts.length > 0 && (
-                  <motion.div variants={stagger} initial="hidden" animate="show"
-                   style={{
-  display:'grid',
-  gridTemplateColumns: isMobile
-    ? 'repeat(2,1fr)'
-    : 'repeat(4,1fr)',
-  gap:12,
-  marginBottom:16
-}}>
-                    {[
-                      { label:'Interviews', value:attempts.length, suffix:'',  icon:'📝', color:'#6366f1' },
-                      { label:'Avg Score',  value:avgScore,        suffix:'%', icon:'📊', color:'#10b981' },
-                      { label:'Best Score', value:bestScore,       suffix:'%', icon:'🏆', color:'#f59e0b' },
-                      { label:'Pass Rate',  value:passRate,        suffix:'%', icon:'✅', color:'#06b6d4' },
-                    ].map(({ label, value, suffix, icon, color }) => (
-                      <motion.div key={label} variants={fadeUp}
-                        className="card-hover"
-                        style={{ background:'rgba(17,24,39,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:14, padding:'16px', backdropFilter:'blur(12px)', position:'relative', overflow:'hidden' }}>
-                        <div style={{ position:'absolute', inset:0, background:`radial-gradient(circle at top right,${color}12,transparent 60%)`, pointerEvents:'none' }} />
-                        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10, position:'relative' }}>
-                          <span style={{ fontSize:10, fontWeight:600, color:'rgba(255,255,255,0.3)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{label}</span>
-                          <span style={{ fontSize:17 }}>{icon}</span>
-                        </div>
-                        <div style={{ fontSize:26, fontWeight:900, color, lineHeight:1, position:'relative' }}>
-                          <AnimatedCounter to={value} suffix={suffix} />
-                        </div>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
+             
 
                 {/* AI Insights */}
                 {attempts.length > 0 && (
@@ -633,80 +602,7 @@ overflow: 'hidden',
                   </motion.div>
                 )}
 
-                {/* Recent Attempts */}
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-                  <div>
-                    <div style={{ fontSize:15, fontWeight:800, color:'#fff' }}>Recent Attempts</div>
-                    <div style={{ fontSize:11, color:'rgba(255,255,255,0.3)', marginTop:1 }}>Click to view full AI feedback</div>
-                  </div>
-                  {attempts.length > 3 && (
-                    <button onClick={() => setActiveNav('My Attempts')}
-                      style={{ fontSize:11, fontWeight:600, color:'#a5b4fc', background:'rgba(99,102,241,0.1)', border:'1px solid rgba(99,102,241,0.2)', borderRadius:8, padding:'5px 12px', cursor:'pointer' }}>
-                      View all →
-                    </button>
-                  )}
-                </div>
 
-                {loading ? (
-                  <div style={{ display:'flex', justifyContent:'center', padding:'28px' }}>
-                    <div style={{ width:28, height:28, border:'2px solid rgba(99,102,241,0.25)', borderTop:'2px solid #6366f1', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
-                  </div>
-                ) : attempts.length === 0 ? (
-                  <motion.div variants={scaleIn} initial="hidden" animate="show"
-                    style={{ background:'rgba(17,24,39,0.7)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'44px 24px', textAlign:'center' }}>
-                    <div style={{ fontSize:44, marginBottom:12, filter:'drop-shadow(0 4px 12px rgba(99,102,241,0.3))' }}>🎯</div>
-                    <div style={{ fontSize:17, fontWeight:800, color:'#fff', marginBottom:6 }}>Start your first interview</div>
-                    <div style={{ fontSize:13, color:'rgba(255,255,255,0.3)', marginBottom:20, maxWidth:300, margin:'0 auto 20px' }}>
-                      Pick any company card above and get AI-powered feedback on your answers.
-                    </div>
-                    <motion.button whileHover={{ scale:1.03 }} whileTap={{ scale:0.97 }}
-                      onClick={() => window.scrollTo({ top:0, behavior:'smooth' })}
-                      style={{ padding:'11px 24px', borderRadius:11, fontSize:13, fontWeight:700, cursor:'pointer', background:'linear-gradient(135deg,#6366f1,#8b5cf6)', color:'#fff', border:'none', boxShadow:'0 0 24px rgba(99,102,241,0.3)' }}>
-                      ✨ Start Practicing
-                    </motion.button>
-                  </motion.div>
-                ) : (
-                  <div style={{ background:'rgba(17,24,39,0.85)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:14, overflow:'hidden', backdropFilter:'blur(12px)' }}>
-                    <div style={{ display:'flex', padding:'9px 16px', borderBottom:'1px solid rgba(255,255,255,0.04)', fontSize:9, fontWeight:700, color:'rgba(255,255,255,0.2)', textTransform:'uppercase', letterSpacing:'0.07em' }}>
-                      <span style={{ flex:2 }}>Role & Company</span>
-                      <span style={{ flex:1, textAlign:'center' }}>Category</span>
-                      <span style={{ flex:1, textAlign:'center' }}>Score</span>
-                      <span style={{ flex:1, textAlign:'center' }}>Grade</span>
-                      <span style={{ flex:1, textAlign:'right' }}>Date</span>
-                    </div>
-                    {attempts.slice(0,3).map((a,i) => {
-                      const sc = getScoreStyle(a.totalScore);
-                      const gc = a.grade==='A'?'#22c55e':a.grade==='B'?'#6366f1':a.grade==='C'?'#f59e0b':'#ef4444';
-                      return (
-                        <div key={a._id} className="row-hover"
-                          onClick={() => navigate(`/results/${a._id}`,{ state:{ attempt:a } })}
-                          style={{ display:'flex', alignItems:'center', padding:'12px 16px', borderBottom:'1px solid rgba(255,255,255,0.03)', cursor:'pointer', borderLeft:'2px solid transparent', transition:'all 0.15s' }}>
-                          <div style={{ flex:2, display:'flex', alignItems:'center', gap:10, minWidth:0 }}>
-                            <div style={{ width:30, height:30, borderRadius:8, background:'linear-gradient(135deg,#6366f1,#8b5cf6)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:12, flexShrink:0 }}>
-                              {a.company?.charAt(0)}
-                            </div>
-                            <div style={{ minWidth:0 }}>
-                              <div style={{ fontSize:12, fontWeight:600, color:'#fff', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.role}</div>
-                              <div style={{ fontSize:10, color:'rgba(255,255,255,0.3)' }}>{a.company}</div>
-                            </div>
-                          </div>
-                          <div style={{ flex:1, textAlign:'center' }}>
-                            <span style={{ fontSize:9, padding:'2px 7px', background:'rgba(255,255,255,0.05)', borderRadius:5, color:'rgba(255,255,255,0.35)' }}>{a.category}</span>
-                          </div>
-                          <div style={{ flex:1, textAlign:'center' }}>
-                            <span style={{ fontSize:11, fontWeight:700, padding:'3px 9px', borderRadius:7, color:sc.color, background:sc.bg, border:`1px solid ${sc.border}` }}>{a.totalScore}%</span>
-                          </div>
-                          <div style={{ flex:1, textAlign:'center' }}>
-                            <span style={{ fontSize:13, fontWeight:800, color:gc }}>{a.grade||'—'}</span>
-                          </div>
-                          <div style={{ flex:1, textAlign:'right', fontSize:10, color:'rgba(255,255,255,0.2)' }}>
-                            {new Date(a.createdAt).toLocaleDateString('en-IN',{ day:'numeric', month:'short' })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
               </motion.div>
             )}
 
