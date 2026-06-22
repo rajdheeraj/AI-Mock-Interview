@@ -10,10 +10,17 @@ export default function RegisterPage() {
   const [showPwd, setShowPwd] = useState(false);
   const { login } = useAuth();
   const navigate  = useNavigate();
+  const [loadingMessage, setLoadingMessage] = useState('Creating account...');
 
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setLoadingMessage('Creating account...');
+
+    const slowTimer = setTimeout(() => {
+      setLoadingMessage('Waking up server, almost there...');
+    }, 3000);
+
     try {
       const { data } = await registerUser(form);
       login(data.user, data.token);
@@ -22,6 +29,7 @@ export default function RegisterPage() {
     } catch (err) {
       toast.error(err.response?.data?.message || 'Registration failed');
     } finally {
+      clearTimeout(slowTimer);
       setLoading(false);
     }
   };
@@ -145,7 +153,7 @@ export default function RegisterPage() {
                 opacity: loading ? 0.7 : 1,
               }}
             >
-              {loading ? 'Creating account...' : 'Create Account →'}
+              {loading ? loadingMessage : 'Create Account →'}
             </button>
           </form>
 

@@ -10,18 +10,26 @@ export default function LoginPage() {
   const [showPwd, setShowPwd] = useState(false);
   const { login } = useAuth();
   const navigate  = useNavigate();
+  const [loadingMessage, setLoadingMessage] = useState('Creating account...');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setLoadingMessage('Creating account...');
+
+    const slowTimer = setTimeout(() => {
+      setLoadingMessage('Waking up server, almost there...');
+    }, 3000);
+
     try {
-      const { data } = await loginUser(form);
+      const { data } = await registerUser(form);
       login(data.user, data.token);
-      toast.success(`Welcome back, ${data.user.name}!`);
+      toast.success(`Welcome, ${data.user.name}!`);
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed');
+      toast.error(err.response?.data?.message || 'Registration failed');
     } finally {
+      clearTimeout(slowTimer);
       setLoading(false);
     }
   };
@@ -122,7 +130,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <button
+           <button
               type="submit"
               disabled={loading}
               style={{
@@ -133,7 +141,7 @@ export default function LoginPage() {
                 opacity: loading ? 0.7 : 1,
               }}
             >
-              {loading ? 'Signing in...' : 'Sign In →'}
+              {loading ? loadingMessage : 'Create Account →'}
             </button>
           </form>
 
