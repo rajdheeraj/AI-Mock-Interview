@@ -12,13 +12,25 @@ app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true
 }));
+
 app.use(express.json());
 
+// ── Health check — keeps Render free tier alive via UptimeRobot ──
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status:  'ok',
+    uptime:  Math.floor(process.uptime()),
+    time:    new Date().toISOString(),
+  });
+});
+
+// ── API routes ───────────────────────────────────────────────────
 app.use('/api/auth',       require('./routes/auth'));
 app.use('/api/interviews', require('./routes/interviews'));
 app.use('/api/attempts',   require('./routes/attempts'));
 app.use('/api/ai',         require('./routes/ai'));
 
+// ── Root ─────────────────────────────────────────────────────────
 app.get('/', (req, res) => res.send('MockPrep API running'));
 
 const PORT = process.env.PORT || 5000;
