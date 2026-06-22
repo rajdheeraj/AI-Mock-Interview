@@ -15,19 +15,19 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setLoadingMessage('Creating account...');
+    setLoadingMessage('Signing in...');
 
     const slowTimer = setTimeout(() => {
       setLoadingMessage('Waking up server, almost there...');
     }, 3000);
 
     try {
-      const { data } = await registerUser(form);
+      const { data } = await loginUser(form);
       login(data.user, data.token);
       toast.success(`Welcome, ${data.user.name}!`);
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Registration failed');
+      toast.error(err.response?.data?.message || 'Login failed');
     } finally {
       clearTimeout(slowTimer);
       setLoading(false);
